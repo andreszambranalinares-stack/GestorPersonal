@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141413" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Panel">
+<meta name="description" content="Tu panel personal: finanzas, tareas, hábitos, calendario y clima.">
+<title>Panel Personal</title>
+<style>
+  :root {
+    color-scheme: light;
+    --plane:        #f4f3ef;
+    --surface:      #ffffff;
+    --surface-2:    #f4f3ef;
+    --bar:          rgba(255,255,255,0.85);
+    --text:         #0b0b0b;
+    --text-2:       #52514e;
+    --muted:        #898781;
+    --border:       rgba(11,11,11,0.10);
+    --hairline:     #e1e0d9;
+    --accent:       #2a78d6;
+    --accent-ink:   #ffffff;
+    --good:         #0ca30c;
+    --danger:       #d03b3b;
+    --warn:         #eda100;
+    --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100;
+    --s5:#e87ba4; --s6:#008300; --s7:#4a3aa7; --s8:#e34948;
+    --shadow: 0 1px 2px rgba(11,11,11,0.05), 0 6px 20px rgba(11,11,11,0.05);
+    --radius: 18px;
+    --bar-h: 56px;
+    --nav-h: 60px;
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-t: env(safe-area-inset-top, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --plane:#0d0d0d; --surface:#1a1a19; --surface-2:#242422; --bar:rgba(20,20,19,0.85);
+      --text:#ffffff; --text-2:#c3c2b7; --muted:#898781;
+      --border:rgba(255,255,255,0.10); --hairline:#2c2c2a;
+      --accent:#3987e5; --good:#0ca30c; --danger:#e66767; --warn:#c98500;
+      --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+      --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 6px 20px rgba(0,0,0,0.45);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --plane:#0d0d0d; --surface:#1a1a19; --surface-2:#242422; --bar:rgba(20,20,19,0.85);
+    --text:#ffffff; --text-2:#c3c2b7; --muted:#898781;
+    --border:rgba(255,255,255,0.10); --hairline:#2c2c2a;
+    --accent:#3987e5; --good:#0ca30c; --danger:#e66767; --warn:#c98500;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+    --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 6px 20px rgba(0,0,0,0.45);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { overscroll-behavior-y: none; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--plane); color: var(--text); line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    padding-top: calc(var(--bar-h) + var(--safe-t));
+    padding-bottom: calc(var(--nav-h) + var(--safe-b) + 8px);
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 14px 14px 24px; }
+
+  /* ---------- App bar ---------- */
+  .appbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 40;
+    height: calc(var(--bar-h) + var(--safe-t)); padding-top: var(--safe-t);
+    background: var(--bar); backdrop-filter: saturate(1.4) blur(12px); -webkit-backdrop-filter: saturate(1.4) blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 6px; padding-left: 6px; padding-right: 10px;
+  }
+  .appbar-inner { max-width: 640px; margin: 0 auto; width: 100%; display: flex; align-items: center; gap: 6px; }
+  .iconbtn {
+    background: transparent; border: none; color: var(--text); cursor: pointer;
+    width: 42px; height: 42px; border-radius: 12px; font-size: 1.35rem; display: flex; align-items: center; justify-content: center;
+  }
+  .iconbtn:active { background: var(--surface-2); }
+  .bar-title { font-weight: 700; font-size: 1.15rem; letter-spacing: -0.01em; flex: 1; }
+  .bar-weather {
+    display: flex; align-items: center; gap: 5px; background: var(--surface-2); border: 1px solid var(--hairline);
+    border-radius: 999px; padding: 5px 11px 5px 9px; cursor: pointer; font-weight: 600; font-size: 0.9rem; color: var(--text);
+  }
+  .bar-weather span.i { font-size: 1.05rem; }
+
+  /* ---------- Drawer ---------- */
+  .scrim { position: fixed; inset: 0; background: rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 45; }
+  .scrim.show { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: fixed; top: 0; bottom: 0; left: 0; width: 280px; max-width: 82vw; z-index: 46;
+    background: var(--surface); border-right: 1px solid var(--border); transform: translateX(-102%); transition: transform .24s cubic-bezier(.4,0,.2,1);
+    padding: calc(var(--safe-t) + 18px) 14px 18px; display: flex; flex-direction: column; box-shadow: 8px 0 40px rgba(0,0,0,0.18);
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer-brand { display: flex; align-items: center; gap: 12px; padding: 4px 8px 16px; }
+  .drawer-brand .logo { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg,var(--s1),var(--s3)); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+  .drawer-brand .bn { font-weight: 700; font-size: 1.05rem; }
+  .drawer-brand .bd { font-size: 0.76rem; color: var(--muted); text-transform: capitalize; }
+  .navlink {
+    display: flex; align-items: center; gap: 13px; width: 100%; text-align: left;
+    background: transparent; border: none; color: var(--text); cursor: pointer;
+    padding: 12px 12px; border-radius: 12px; font-size: 1rem; font-weight: 500;
+  }
+  .navlink .ni { font-size: 1.25rem; width: 24px; text-align: center; }
+  .navlink:active { background: var(--surface-2); }
+  .navlink.active { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); font-weight: 650; }
+  .drawer-foot { margin-top: auto; font-size: 0.72rem; color: var(--muted); text-align: center; padding-top: 14px; }
+
+  /* ---------- Bottom nav ---------- */
+  .botnav {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+    height: calc(var(--nav-h) + var(--safe-b)); padding-bottom: var(--safe-b);
+    background: var(--bar); backdrop-filter: saturate(1.4) blur(12px); -webkit-backdrop-filter: saturate(1.4) blur(12px);
+    border-top: 1px solid var(--border); display: flex; justify-content: center;
+  }
+  .botnav-inner { max-width: 640px; width: 100%; display: flex; }
+  .navbtn {
+    flex: 1; background: transparent; border: none; color: var(--muted); cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 6px 0;
+  }
+  .navbtn .ni { font-size: 1.3rem; line-height: 1; filter: grayscale(0.4); opacity: 0.7; transition: transform .12s; }
+  .navbtn .nl { font-size: 0.64rem; font-weight: 600; }
+  .navbtn.active { color: var(--accent); }
+  .navbtn.active .ni { filter: none; opacity: 1; transform: translateY(-1px) scale(1.08); }
+
+  /* ---------- FAB ---------- */
+  .fab {
+    position: fixed; right: max(16px, env(safe-area-inset-right)); z-index: 41;
+    bottom: calc(var(--nav-h) + var(--safe-b) + 16px);
+    width: 56px; height: 56px; border-radius: 18px; border: none; cursor: pointer;
+    background: var(--accent); color: var(--accent-ink); font-size: 1.7rem; line-height: 1;
+    display: none; align-items: center; justify-content: center; box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+  .fab:active { transform: scale(0.94); }
+
+  /* ---------- Views ---------- */
+  .view { display: none; }
+  .view.active { display: block; animation: fade .22s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* ---------- Cards ---------- */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); margin-bottom: 14px; }
+  .card:last-child { margin-bottom: 0; }
+  .card h2 { font-size: 1.02rem; font-weight: 650; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .card h2 .em { font-size: 1.2rem; }
+  .card h2 .right { margin-left: auto; font-size: 0.85rem; font-weight: 600; color: var(--text-2); }
+  .section-title { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 700; margin: 4px 2px 8px; }
+
+  /* ---------- Home ---------- */
+  .greet { margin-bottom: 14px; }
+  .greet h1 { font-size: 1.7rem; font-weight: 700; letter-spacing: -0.02em; }
+  .greet .date { color: var(--text-2); font-size: 0.92rem; text-transform: capitalize; }
+  .weather-hero { display: flex; align-items: center; gap: 16px; }
+  .weather-hero .icon { font-size: 3rem; line-height: 1; }
+  .weather-hero .temp { font-size: 2.2rem; font-weight: 700; letter-spacing: -0.02em; }
+  .weather-hero .meta { font-size: 0.85rem; color: var(--text-2); }
+  .weather-hero .city { font-weight: 600; color: var(--text); }
+  .weather-hero.link { cursor: pointer; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px; box-shadow: var(--shadow); }
+  .stat .sl { font-size: 0.74rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; font-weight: 600; }
+  .stat .sv { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .stat .sv.sm { font-size: 1.25rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 7px; padding: 8px 13px; border-radius: 999px;
+    background: var(--surface-2); border: 1px solid var(--hairline); cursor: pointer; font-size: 0.9rem; font-weight: 500;
+  }
+  .chip.on { background: color-mix(in srgb, var(--good) 16%, transparent); border-color: var(--good); color: var(--good); font-weight: 650; }
+  .chip .st { font-size: 0.72rem; color: var(--warn); font-weight: 700; }
+  .chip.on .st { color: var(--good); }
+
+  /* ---------- Inputs / buttons ---------- */
+  input, select, textarea, button { font: inherit; color: inherit; }
+  input, select, textarea {
+    background: var(--surface-2); border: 1px solid var(--hairline); border-radius: 12px; padding: 11px 12px; width: 100%; font-size: 16px;
+  }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  textarea { resize: vertical; min-height: 64px; }
+  button.btn {
+    cursor: pointer; border: none; border-radius: 12px; padding: 11px 16px; background: var(--accent); color: var(--accent-ink); font-weight: 600;
+  }
+  button.btn:active { transform: scale(0.97); }
+  button.ghost { background: var(--surface-2); color: var(--text); border: 1px solid var(--hairline); border-radius: 12px; padding: 11px 14px; font-weight: 600; cursor: pointer; }
+  button.icon-btn { background: transparent; border: none; color: var(--muted); padding: 6px 8px; cursor: pointer; font-size: 0.95rem; }
+  button.icon-btn:active { color: var(--danger); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .row > * { flex: 1 1 auto; }
+  .row .grow0 { flex: 0 0 auto; }
+
+  /* ---------- Finance ---------- */
+  .fin-top { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .donut-wrap { display: flex; justify-content: center; }
+  .total-lbl { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .legend { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  .legend .lg { display: flex; align-items: center; gap: 8px; font-size: 0.92rem; }
+  .legend .sw { width: 12px; height: 12px; border-radius: 4px; flex: 0 0 auto; }
+  .legend .amt { margin-left: auto; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .legend .pct { color: var(--muted); font-size: 0.8rem; width: 42px; text-align: right; font-variant-numeric: tabular-nums; }
+  .list { display: flex; flex-direction: column; margin-top: 12px; }
+  .item { display: flex; align-items: center; gap: 11px; padding: 11px 4px; border-bottom: 1px solid var(--hairline); }
+  .item:last-child { border-bottom: none; }
+  .item .cat-dot { width: 11px; height: 11px; border-radius: 4px; flex: 0 0 auto; }
+  .item .desc { flex: 1 1 auto; min-width: 0; }
+  .item .desc .t { font-size: 0.94rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item .desc .s { font-size: 0.76rem; color: var(--muted); }
+  .item .val { font-weight: 650; font-variant-numeric: tabular-nums; }
+  .empty { color: var(--muted); font-size: 0.9rem; padding: 16px 4px; text-align: center; }
+  .item.income .val { color: var(--good); }
+
+  /* ---------- Finanzas Pro ---------- */
+  .seg { display: flex; gap: 6px; background: var(--surface-2); border: 1px solid var(--hairline); border-radius: 12px; padding: 4px; margin-bottom: 14px; }
+  .seg-btn { flex: 1; background: transparent; border: none; border-radius: 9px; padding: 10px; font-weight: 650; color: var(--text-2); cursor: pointer; }
+  .seg-btn.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+  .seg-btn[data-type="ingreso"].active { color: var(--good); }
+  .bal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .bal { background: var(--surface-2); border: 1px solid var(--hairline); border-radius: 14px; padding: 12px 8px; text-align: center; }
+  .bal .bl { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.02em; font-weight: 600; }
+  .bal .bv { font-size: 1.15rem; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .pos { color: var(--good); } .neg { color: var(--danger); }
+  .progress { height: 10px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--hairline); overflow: hidden; }
+  .progress > span { display: block; height: 100%; border-radius: 999px; background: var(--accent); transition: width .35s; }
+  .progress.warn > span { background: var(--warn); }
+  .progress.over > span { background: var(--danger); }
+  .budget-head { display: flex; justify-content: space-between; font-size: 0.84rem; margin-bottom: 6px; font-variant-numeric: tabular-nums; }
+  .budget-msg { font-size: 0.78rem; margin-top: 6px; color: var(--muted); }
+  .budget-msg.over { color: var(--danger); font-weight: 600; }
+  .goal { padding: 13px 2px; border-bottom: 1px solid var(--hairline); }
+  .goal:last-child { border-bottom: none; }
+  .goal-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .goal-name { flex: 1; font-weight: 600; }
+  .goal-amt { font-size: 0.82rem; color: var(--text-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .goal-ctrls { display: flex; gap: 6px; margin-top: 8px; }
+  .goal-ctrls button { padding: 6px 12px; font-size: 0.82rem; }
+
+  /* ---------- Tasks ---------- */
+  .task { display: flex; align-items: center; gap: 11px; padding: 11px 2px; border-bottom: 1px solid var(--hairline); }
+  .task:last-child { border-bottom: none; }
+  .task input[type=checkbox] { width: 22px; height: 22px; flex: 0 0 auto; accent-color: var(--accent); }
+  .task .txt { flex: 1 1 auto; }
+  .task.done .txt { text-decoration: line-through; color: var(--muted); }
+  .pill { font-size: 0.66rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; }
+  .pill.alta { background: color-mix(in srgb, var(--danger) 18%, transparent); color: var(--danger); }
+  .pill.media { background: color-mix(in srgb, var(--warn) 22%, transparent); color: var(--warn); }
+  .pill.baja { background: color-mix(in srgb, var(--muted) 22%, transparent); color: var(--text-2); }
+  .task .carried { font-size: 0.8rem; color: var(--muted); cursor: help; }
+  .task .recur { font-size: 0.8rem; color: var(--accent); }
+  .routines { margin-top: 14px; }
+  .rt { display: flex; align-items: center; gap: 8px; padding: 8px 2px; border-bottom: 1px solid var(--hairline); font-size: 0.9rem; }
+  .rt:last-child { border-bottom: none; }
+  .rt .rt-rep { font-size: 0.66rem; color: var(--accent); font-weight: 700; white-space: nowrap; }
+
+  /* Pomodoro */
+  .pomo { padding: 18px; border: 1px solid var(--hairline); border-radius: 16px; background: var(--surface-2); text-align: center; }
+  .pomo.break { border-color: var(--good); }
+  .pomo-time { font-size: 3rem; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; line-height: 1.05; }
+  .pomo-mode { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 6px; }
+  .pomo-mode b { color: var(--accent); }
+  .pomo.break .pomo-mode b { color: var(--good); }
+  .pomo-ctrls { display: flex; gap: 8px; justify-content: center; margin-top: 14px; }
+  .pomo-ctrls button { padding: 10px 20px; }
+  .pomo.ring { animation: pomoPulse 0.8s ease-in-out 3; }
+  @keyframes pomoPulse { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 45%, transparent); } }
+
+  /* ---------- Habits ---------- */
+  .habit { padding: 14px 2px; border-bottom: 1px solid var(--hairline); }
+  .habit:last-child { border-bottom: none; }
+  .habit-head { display: flex; align-items: center; gap: 10px; }
+  .habit-name { flex: 1 1 auto; font-weight: 600; }
+  .streak { font-size: 0.84rem; color: var(--warn); font-weight: 700; white-space: nowrap; }
+  .week { display: flex; gap: 6px; margin-top: 10px; }
+  .day { flex: 1 1 0; text-align: center; }
+  .day .dl { font-size: 0.64rem; color: var(--muted); margin-bottom: 4px; }
+  .day .cell {
+    height: 34px; border-radius: 9px; background: var(--surface-2); border: 1px solid var(--hairline);
+    cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.85rem;
+  }
+  .day .cell:active { transform: scale(0.92); }
+  .day .cell.on { background: var(--good); border-color: var(--good); color: #fff; }
+  .day.today .dl { color: var(--accent); font-weight: 700; }
+
+  /* ---------- Config ---------- */
+  .cfg-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .cfg-row label { font-size: 0.9rem; min-width: 110px; color: var(--text-2); }
+  .cfg-row input, .cfg-row select { flex: 1 1 140px; }
+  .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btn-grid button { width: 100%; }
+  .mini { font-size: 0.8rem; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+
+  /* ---------- Resumen mensual ---------- */
+  .ms-chart { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; align-items: end; height: 170px; }
+  .ms-col { display: flex; flex-direction: column; align-items: center; height: 100%; }
+  .ms-val { font-size: 0.62rem; color: var(--text-2); font-weight: 600; height: 15px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ms-bar-track { flex: 1; width: 100%; display: flex; align-items: flex-end; }
+  .ms-bar { width: 100%; max-width: 42px; margin: 0 auto; background: var(--accent); opacity: 0.5; border-radius: 5px 5px 0 0; min-height: 2px; transition: height .3s; }
+  .ms-bar.cur { opacity: 1; }
+  .ms-lbl { font-size: 0.7rem; color: var(--muted); margin-top: 6px; text-transform: capitalize; }
+
+  /* ---------- Calendario ---------- */
+  .cal-nav { display: flex; align-items: center; gap: 6px; }
+  .cal-nav button { background: var(--surface-2); color: var(--text); border: 1px solid var(--hairline); border-radius: 10px; padding: 4px 12px; font-size: 1.1rem; line-height: 1; cursor: pointer; }
+  .cal-weekhead, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+  .cal-weekhead { margin-bottom: 6px; }
+  .cal-weekhead div { text-align: center; font-size: 0.68rem; color: var(--muted); font-weight: 700; padding: 2px 0; }
+  .cal-cell {
+    min-height: 58px; border: 1px solid var(--hairline); border-radius: 10px; background: var(--surface-2);
+    padding: 4px 5px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; overflow: hidden;
+  }
+  .cal-cell:active { transform: scale(0.96); }
+  .cal-cell.empty-cell { background: transparent; border: none; }
+  .cal-cell.today { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .cd-num { font-weight: 700; font-size: 0.8rem; }
+  .cal-cell.today .cd-num { color: var(--accent); }
+  .cd-temp { font-size: 0.64rem; color: var(--muted); }
+  .cd-marks { margin-top: auto; display: flex; flex-direction: column; gap: 1px; }
+  .cd-exp { font-size: 0.62rem; font-weight: 700; color: var(--danger); font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cd-hab { font-size: 0.62rem; }
+
+  /* ---------- Modal ---------- */
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: flex-end; justify-content: center; z-index: 60; }
+  .modal.open { display: flex; animation: fade .2s ease; }
+  .modal-box { background: var(--surface); border-radius: 22px 22px 0 0; max-width: 520px; width: 100%; max-height: 88vh; overflow-y: auto; padding-bottom: var(--safe-b); animation: slideup .26s cubic-bezier(.4,0,.2,1); }
+  @keyframes slideup { from { transform: translateY(100%); } to { transform: none; } }
+  .modal-grip { width: 40px; height: 4px; border-radius: 999px; background: var(--hairline); margin: 8px auto 0; }
+  .modal-head { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-bottom: 1px solid var(--hairline); position: sticky; top: 0; background: var(--surface); z-index: 1; }
+  .modal-head h3 { font-size: 1rem; text-transform: capitalize; flex: 1; }
+  .modal-head button { background: var(--surface-2); color: var(--text); padding: 6px 12px; border: 1px solid var(--hairline); border-radius: 10px; cursor: pointer; }
+  .modal-body { padding: 16px 18px 24px; }
+  .md-weather { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; font-size: 0.92rem; }
+  .md-weather.muted { color: var(--muted); }
+  .md-sec { margin-bottom: 18px; }
+  .md-sec:last-child { margin-bottom: 0; }
+  .md-h { font-weight: 650; font-size: 0.9rem; margin-bottom: 6px; display: flex; }
+  .md-h span { margin-left: auto; color: var(--text-2); }
+  .md-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--hairline); font-size: 0.92rem; }
+  .md-row:last-child { border-bottom: none; }
+  .md-amt { margin-left: auto; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .md-empty { color: var(--muted); font-size: 0.85rem; padding: 4px 0; }
+
+  /* wider screens: modal centered as a card */
+  @media (min-width: 620px) {
+    .modal { align-items: center; padding: 20px; }
+    .modal-box { border-radius: 22px; }
+    .modal-grip { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== App bar ===== -->
+<div class="appbar">
+  <div class="appbar-inner">
+    <button class="iconbtn" id="hamburger" aria-label="Menú">☰</button>
+    <div class="bar-title" id="barTitle">Inicio</div>
+    <button class="bar-weather" id="barWeather" aria-label="Ver clima"><span class="i" id="barIcon">🌡️</span><span id="barTemp">--°</span></button>
+    <button class="iconbtn" id="gear" aria-label="Ajustes">⚙️</button>
+  </div>
+</div>
+
+<!-- ===== Drawer ===== -->
+<div class="scrim" id="scrim"></div>
+<nav class="drawer" id="drawer">
+  <div class="drawer-brand">
+    <div class="logo">📊</div>
+    <div><div class="bn">Panel Personal</div><div class="bd" id="drawerDate"></div></div>
+  </div>
+  <button class="navlink" data-nav="home"><span class="ni">🏠</span> Inicio</button>
+  <button class="navlink" data-nav="finanzas"><span class="ni">💰</span> Finanzas</button>
+  <button class="navlink" data-nav="tareas"><span class="ni">✅</span> Tareas</button>
+  <button class="navlink" data-nav="habitos"><span class="ni">🔥</span> Hábitos</button>
+  <button class="navlink" data-nav="calendario"><span class="ni">📅</span> Calendario</button>
+  <button class="navlink" data-nav="ajustes"><span class="ni">⚙️</span> Ajustes</button>
+  <div class="drawer-foot">Tus datos viven solo en este dispositivo 🔒</div>
+</nav>
+
+<div class="wrap">
+
+  <!-- ===== INICIO ===== -->
+  <section class="view" id="view-home">
+    <div class="greet">
+      <h1 id="homeGreet">Hola 👋</h1>
+      <div class="date" id="homeDate"></div>
+    </div>
+    <div class="card">
+      <div class="weather-hero link" id="weatherHero">
+        <div class="icon" id="hIcon">🌡️</div>
+        <div>
+          <div class="temp" id="hTemp">--°</div>
+          <div class="meta"><span class="city" id="hCity">Configura tu ciudad</span> · <span id="hDesc">toca ⚙️ para añadirla</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="sl">Gasto hoy</div><div class="sv sm" id="stGastoHoy">—</div></div>
+      <div class="stat"><div class="sl">Gasto del mes</div><div class="sv sm" id="stGastoMes">—</div></div>
+      <div class="stat"><div class="sl">Tareas pendientes</div><div class="sv" id="stPend">0</div></div>
+      <div class="stat"><div class="sl">Hábitos hoy</div><div class="sv" id="stHab">0/0</div></div>
+    </div>
+    <div class="card">
+      <h2><span class="em">🎯</span> Foco del día</h2>
+      <textarea id="focusNote" placeholder="¿Cuál es tu prioridad principal hoy?"></textarea>
+    </div>
+    <div class="card">
+      <h2><span class="em">✅</span> Tareas de hoy <span class="right" id="homeTaskCount"></span></h2>
+      <div class="list" id="homeTasks"></div>
+    </div>
+    <div class="card">
+      <h2><span class="em">🔥</span> Hábitos de hoy</h2>
+      <div class="chips" id="homeHabits"></div>
+    </div>
+  </section>
+
+  <!-- ===== FINANZAS ===== -->
+  <section class="view" id="view-finanzas">
+    <div class="card">
+      <h2><span class="em">⚖️</span> Balance
+        <span class="right"><input type="month" id="finMonth" style="width:auto;padding:6px 8px;font-size:14px;"></span>
+      </h2>
+      <div class="bal-grid">
+        <div class="bal"><div class="bl">Ingresos</div><div class="bv pos" id="balIn">—</div></div>
+        <div class="bal"><div class="bl">Gastos</div><div class="bv neg" id="balOut">—</div></div>
+        <div class="bal"><div class="bl">Saldo</div><div class="bv" id="balNet">—</div></div>
+      </div>
+      <div id="budgetWrap" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="em">💰</span> Movimientos</h2>
+      <div class="seg" id="txType">
+        <button type="button" class="seg-btn active" data-type="gasto">− Gasto</button>
+        <button type="button" class="seg-btn" data-type="ingreso">＋ Ingreso</button>
+      </div>
+      <div class="fin-top">
+        <div class="donut-wrap" id="donutWrap"></div>
+        <div class="total-lbl">Total gastos del mes</div>
+        <div style="font-size:2rem;font-weight:700;letter-spacing:-0.02em;" id="finTotal">—</div>
+      </div>
+      <div class="legend" id="finLegend"></div>
+      <form class="row" id="finForm" style="margin-top:16px;">
+        <input class="grow0" type="number" step="0.01" min="0" inputmode="decimal" id="finAmount" placeholder="Monto" style="flex:1 1 110px;" required>
+        <select class="grow0" id="finCat" style="flex:1 1 130px;"></select>
+        <input type="text" id="finNote" placeholder="Nota (opcional)" style="flex:1 1 100%;">
+        <button class="btn" type="submit" id="finSubmit" style="flex:1 1 100%;">Agregar gasto</button>
+      </form>
+      <div class="list" id="finList"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="em">📊</span> Resumen por mes <span class="right" id="msAvg"></span></h2>
+      <div class="ms-chart" id="msChart"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="em">🎯</span> Metas de ahorro</h2>
+      <form class="row" id="goalForm">
+        <input type="text" id="goalName" placeholder="Meta (ej. Vacaciones)" style="flex:2 1 140px;" required>
+        <input type="number" min="1" step="0.01" inputmode="decimal" id="goalTarget" placeholder="Objetivo" style="flex:1 1 90px;" required>
+        <button class="btn grow0" type="submit" style="flex:0 0 auto;">Crear</button>
+      </form>
+      <div id="goalList" style="margin-top:8px;"></div>
+    </div>
+  </section>
+
+  <!-- ===== TAREAS ===== -->
+  <section class="view" id="view-tareas">
+    <div class="card">
+      <h2><span class="em">✅</span> Tareas <span class="right" id="taskCount"></span></h2>
+      <form id="taskForm">
+        <input type="text" id="taskText" placeholder="Nueva tarea…" required style="margin-bottom:8px;">
+        <div class="row">
+          <select class="grow0" id="taskPrio" style="flex:1 1 auto;">
+            <option value="alta">🔴 Alta</option>
+            <option value="media" selected>🟡 Media</option>
+            <option value="baja">⚪ Baja</option>
+          </select>
+          <select class="grow0" id="taskRepeat" style="flex:1 1 auto;" title="Repetir">
+            <option value="">No repetir</option>
+            <option value="diario">🔁 Diario</option>
+            <option value="laborables">🔁 Laborables</option>
+            <option value="semanal">🔁 Semanal</option>
+          </select>
+          <button class="btn grow0" type="submit" style="flex:0 0 auto;">Añadir</button>
+        </div>
+      </form>
+      <div class="list" id="taskList"></div>
+      <div class="routines" id="routinesBox"></div>
+    </div>
+    <div class="card">
+      <h2><span class="em">🍅</span> Temporizador de enfoque</h2>
+      <div class="pomo" id="pomo">
+        <div class="pomo-mode">Modo · <b id="pomoMode">Enfoque</b></div>
+        <div class="pomo-time" id="pomoTime">25:00</div>
+        <div class="pomo-ctrls">
+          <button class="btn" id="pomoStart" type="button">Iniciar</button>
+          <button class="ghost" id="pomoReset" type="button">Reiniciar</button>
+          <button class="ghost" id="pomoSkip" type="button" title="Cambiar enfoque/descanso">⏭</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== HÁBITOS ===== -->
+  <section class="view" id="view-habitos">
+    <div class="card">
+      <h2><span class="em">🔥</span> Hábitos</h2>
+      <form class="row" id="habitForm">
+        <input type="text" id="habitName" placeholder="Nuevo hábito (ej. Agua, Ejercicio)…" required>
+        <button class="btn grow0" type="submit" style="flex:0 0 auto;">Añadir</button>
+      </form>
+      <div id="habitList" style="margin-top:8px;"></div>
+    </div>
+  </section>
+
+  <!-- ===== CALENDARIO ===== -->
+  <section class="view" id="view-calendario">
+    <div class="card">
+      <h2><span class="em">📅</span> Calendario
+        <span class="right cal-nav">
+          <button id="calPrev" aria-label="Mes anterior" type="button">‹</button>
+          <span id="calLabel" style="min-width:120px;text-align:center;display:inline-block;text-transform:capitalize;"></span>
+          <button id="calNext" aria-label="Mes siguiente" type="button">›</button>
+        </span>
+      </h2>
+      <div class="cal-weekhead"><div>L</div><div>M</div><div>X</div><div>J</div><div>V</div><div>S</div><div>D</div></div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="mini" style="margin-top:12px;">Toca cualquier día para ver tus gastos, tareas, hábitos y el clima de esa fecha.</div>
+    </div>
+  </section>
+
+  <!-- ===== AJUSTES ===== -->
+  <section class="view" id="view-ajustes">
+    <div class="card">
+      <h2><span class="em">🌤️</span> Clima</h2>
+      <div class="cfg-row">
+        <label for="cfgCity">Ciudad</label>
+        <input type="text" id="cfgCity" placeholder="Ej. Madrid, Bogotá, Buenos Aires">
+      </div>
+      <button class="btn" id="cfgCitySave" style="width:100%;">Guardar ciudad</button>
+    </div>
+    <div class="card">
+      <h2><span class="em">💵</span> Finanzas</h2>
+      <div class="cfg-row">
+        <label for="cfgCurrency">Símbolo moneda</label>
+        <input type="text" id="cfgCurrency" maxlength="4" placeholder="$ · € · £">
+      </div>
+      <div class="cfg-row">
+        <label for="cfgBudget">Presupuesto mensual</label>
+        <input type="number" min="0" step="1" inputmode="decimal" id="cfgBudget" placeholder="0 = sin límite">
+      </div>
+      <div class="mini">Al fijar un presupuesto verás una barra de progreso y un aviso cuando te acerques o lo superes.</div>
+    </div>
+    <div class="card">
+      <h2><span class="em">🎨</span> Apariencia</h2>
+      <div class="cfg-row">
+        <label for="themeSel">Tema</label>
+        <select id="themeSel">
+          <option value="auto">Automático (sistema)</option>
+          <option value="light">Claro</option>
+          <option value="dark">Oscuro</option>
+        </select>
+      </div>
+    </div>
+    <div class="card">
+      <h2><span class="em">💾</span> Respaldo</h2>
+      <div class="btn-grid">
+        <button class="ghost" id="btnExport">⬇️ Exportar (JSON)</button>
+        <button class="ghost" id="btnImport">⬆️ Importar (JSON)</button>
+        <button class="ghost" id="btnCsv">📊 Gastos a CSV</button>
+        <button class="ghost" id="btnReset" style="color:var(--danger);">🗑️ Borrar todo</button>
+      </div>
+      <input type="file" id="fileImport" accept="application/json" style="display:none;">
+      <div class="mini">Tus datos se guardan solo en este navegador y este equipo (no se sincronizan entre dispositivos). Exporta un respaldo de vez en cuando; usa Exportar/Importar para pasar tus datos entre el móvil y el PC.</div>
+    </div>
+    <div class="card">
+      <h2><span class="em">ℹ️</span> Acerca de</h2>
+      <div class="mini" id="aboutBox">Panel Personal · funciona sin internet (excepto el clima).</div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ===== FAB ===== -->
+<button class="fab" id="fab" aria-label="Añadir">+</button>
+
+<!-- ===== Bottom nav ===== -->
+<nav class="botnav">
+  <div class="botnav-inner">
+    <button class="navbtn" data-nav="home"><span class="ni">🏠</span><span class="nl">Inicio</span></button>
+    <button class="navbtn" data-nav="finanzas"><span class="ni">💰</span><span class="nl">Finanzas</span></button>
+    <button class="navbtn" data-nav="tareas"><span class="ni">✅</span><span class="nl">Tareas</span></button>
+    <button class="navbtn" data-nav="habitos"><span class="ni">🔥</span><span class="nl">Hábitos</span></button>
+    <button class="navbtn" data-nav="calendario"><span class="ni">📅</span><span class="nl">Agenda</span></button>
+  </div>
+</nav>
+
+<!-- ===== Modal detalle del día ===== -->
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <div class="modal-grip"></div>
+    <div class="modal-head"><h3 id="modalTitle"></h3><button id="modalClose" type="button" aria-label="Cerrar">✕</button></div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+// ---------- Estado ----------
+const KEY = "panelPersonal.v1";
+const CATS = ["Comida","Transporte","Hogar","Ocio","Salud","Compras","Servicios","Otros"];
+const CAT_COLOR = i => `var(--s${(i % 8) + 1})`;
+
+const defaultState = () => ({
+  expenses: [],   // {id, amount, cat, note, date}
+  incomes: [],    // {id, amount, note, date}
+  goals: [],      // {id, name, target, saved}
+  tasks: [],      // {id, text, prio, done, date, created, routineId?}
+  routines: [],   // {id, text, prio, repeat, dow}
+  habits: [],     // {id, name, log:{ "YYYY-MM-DD": true }}
+  focus: { date: "", text: "" },
+  weatherLog: {}, // { "YYYY-MM-DD": {max, min, code} }
+  config: { city: "", currency: "$", theme: "auto", budget: 0, lat: null, lon: null, geoCity: "", geoName: "" }
+});
+
+let state = load();
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return defaultState();
+    return Object.assign(defaultState(), JSON.parse(raw));
+  } catch { return defaultState(); }
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const $ = id => document.getElementById(id);
+
+// ---------- Utilidades de fecha ----------
+const pad = n => String(n).padStart(2, "0");
+function ymd(d) { return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+const todayStr = ymd(new Date());
+function curMonth() { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}`; }
+function money(n) { return state.config.currency + n.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+function moneyShort(n) { return state.config.currency + Math.round(n).toLocaleString("es"); }
+function esc(s){ return String(s||"").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+// ---------- Navegación ----------
+const VIEWS = ["home","finanzas","tareas","habitos","calendario","ajustes"];
+const VIEW_TITLE = { home:"Inicio", finanzas:"Finanzas", tareas:"Tareas", habitos:"Hábitos", calendario:"Calendario", ajustes:"Ajustes" };
+let currentView = "home";
+function switchView(v) {
+  if (!VIEWS.includes(v)) v = "home";
+  currentView = v;
+  document.querySelectorAll(".view").forEach(el => el.classList.toggle("active", el.id === "view-" + v));
+  document.querySelectorAll("[data-nav]").forEach(el => el.classList.toggle("active", el.dataset.nav === v));
+  $("barTitle").textContent = VIEW_TITLE[v];
+  $("fab").style.display = ["finanzas","tareas","habitos"].includes(v) ? "flex" : "none";
+  window.scrollTo(0, 0);
+  closeDrawer();
+  if (v === "home") renderHome();
+  if (v === "calendario") renderCalendar();
+  if (v === "finanzas") { renderFinance(); renderMonthlySummary(); }
+}
+function openDrawer() { $("drawer").classList.add("open"); $("scrim").classList.add("show"); }
+function closeDrawer() { $("drawer").classList.remove("open"); $("scrim").classList.remove("show"); }
+
+$("hamburger").addEventListener("click", openDrawer);
+$("scrim").addEventListener("click", closeDrawer);
+$("gear").addEventListener("click", () => switchView("ajustes"));
+document.querySelectorAll("[data-nav]").forEach(el => el.addEventListener("click", () => switchView(el.dataset.nav)));
+$("barWeather").addEventListener("click", () => switchView(state.config.city ? "home" : "ajustes"));
+$("weatherHero").addEventListener("click", () => { if (!state.config.city) switchView("ajustes"); });
+$("fab").addEventListener("click", () => {
+  if (currentView === "finanzas") $("finAmount").focus();
+  else if (currentView === "tareas") $("taskText").focus();
+  else if (currentView === "habitos") $("habitName").focus();
+});
+
+// ---------- Header / saludo ----------
+function greeting() {
+  const h = new Date().getHours();
+  return h < 6 ? "Buenas noches" : h < 13 ? "Buenos días" : h < 20 ? "Buenas tardes" : "Buenas noches";
+}
+function renderChrome() {
+  const fecha = new Date().toLocaleDateString("es", {weekday:"long", day:"numeric", month:"long", year:"numeric"});
+  $("homeGreet").textContent = `${greeting()} 👋`;
+  $("homeDate").textContent = fecha;
+  $("drawerDate").textContent = fecha;
+}
+
+// ---------- Clima (Open-Meteo, sin API key) ----------
+const WCODE = {
+  0:["☀️","Despejado"],1:["🌤️","Mayormente despejado"],2:["⛅","Parcialmente nublado"],3:["☁️","Nublado"],
+  45:["🌫️","Niebla"],48:["🌫️","Niebla"],51:["🌦️","Llovizna"],53:["🌦️","Llovizna"],55:["🌦️","Llovizna"],
+  61:["🌧️","Lluvia"],63:["🌧️","Lluvia"],65:["🌧️","Lluvia fuerte"],66:["🌧️","Lluvia helada"],67:["🌧️","Lluvia helada"],
+  71:["🌨️","Nieve"],73:["🌨️","Nieve"],75:["❄️","Nieve fuerte"],77:["🌨️","Aguanieve"],
+  80:["🌦️","Chubascos"],81:["🌦️","Chubascos"],82:["⛈️","Chubascos fuertes"],
+  85:["🌨️","Chubascos de nieve"],86:["🌨️","Chubascos de nieve"],
+  95:["⛈️","Tormenta"],96:["⛈️","Tormenta con granizo"],99:["⛈️","Tormenta con granizo"]
+};
+async function ensureCoords() {
+  if (!state.config.city) return null;
+  if (state.config.lat != null && state.config.lon != null && state.config.geoCity === state.config.city) {
+    return { lat: state.config.lat, lon: state.config.lon, name: state.config.geoName || state.config.city };
+  }
+  const g = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(state.config.city)}&count=1&language=es&format=json`).then(r=>r.json());
+  if (!g.results || !g.results.length) return null;
+  const r0 = g.results[0];
+  state.config.lat = r0.latitude; state.config.lon = r0.longitude;
+  state.config.geoCity = state.config.city; state.config.geoName = r0.name;
+  save();
+  return { lat: r0.latitude, lon: r0.longitude, name: r0.name };
+}
+async function loadWeather() {
+  if (!state.config.city) {
+    $("hCity").textContent = "Configura tu ciudad"; $("hTemp").textContent = "--°"; $("hDesc").textContent = "toca ⚙️ para añadirla"; $("hIcon").textContent = "🌡️";
+    $("barTemp").textContent = "--°"; $("barIcon").textContent = "🌡️"; return;
+  }
+  $("hCity").textContent = state.config.city; $("hDesc").textContent = "cargando…";
+  try {
+    const c = await ensureCoords();
+    if (!c) { $("hDesc").textContent = "ciudad no encontrada"; $("hIcon").textContent = "❓"; return; }
+    const w = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto`).then(r=>r.json());
+    const t = Math.round(w.current.temperature_2m);
+    const [ic, txt] = WCODE[w.current.weather_code] || ["🌡️","—"];
+    const mx = Math.round(w.daily.temperature_2m_max[0]), mn = Math.round(w.daily.temperature_2m_min[0]);
+    $("hCity").textContent = c.name; $("hTemp").textContent = `${t}°`; $("hIcon").textContent = ic;
+    $("hDesc").textContent = `${txt} · ↑${mx}° ↓${mn}°`;
+    $("barTemp").textContent = `${t}°`; $("barIcon").textContent = ic;
+    state.weatherLog[todayStr] = { max: mx, min: mn, code: w.current.weather_code };
+    save();
+    renderCalendar();
+  } catch {
+    $("hDesc").textContent = "sin conexión"; $("hIcon").textContent = "📡"; $("barIcon").textContent = "📡";
+  }
+}
+const fetchedMonths = new Set();
+async function fetchHistoryForMonth(monthStr) {
+  if (!state.config.city || fetchedMonths.has(monthStr)) return;
+  if (monthStr > curMonth()) return;
+  const c = await ensureCoords(); if (!c) return;
+  fetchedMonths.add(monthStr);
+  const [y, m] = monthStr.split("-").map(Number);
+  const start = `${monthStr}-01`;
+  const lastDay = new Date(y, m, 0).getDate();
+  let end = `${monthStr}-${pad(lastDay)}`;
+  if (end > todayStr) end = todayStr;
+  try {
+    const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${c.lat}&longitude=${c.lon}&start_date=${start}&end_date=${end}&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto`;
+    const d = await fetch(url).then(r=>r.json());
+    if (d.daily && d.daily.time) {
+      d.daily.time.forEach((t, i) => {
+        const mx = d.daily.temperature_2m_max[i];
+        if (mx != null) state.weatherLog[t] = { max: Math.round(mx), min: Math.round(d.daily.temperature_2m_min[i]), code: d.daily.weather_code[i] };
+      });
+      save(); renderCalendar();
+    }
+  } catch { fetchedMonths.delete(monthStr); }
+}
+
+// ---------- Inicio (resumen) ----------
+function renderHome() {
+  const gastoHoy = state.expenses.filter(e => e.date === todayStr).reduce((s,e)=>s+e.amount, 0);
+  const gastoMes = state.expenses.filter(e => e.date.startsWith(curMonth())).reduce((s,e)=>s+e.amount, 0);
+  const pend = state.tasks.filter(t => !t.done).length;
+  const habDone = state.habits.filter(h => h.log[todayStr]).length;
+  $("stGastoHoy").textContent = moneyShort(gastoHoy);
+  $("stGastoMes").textContent = moneyShort(gastoMes);
+  $("stPend").textContent = pend;
+  $("stHab").textContent = `${habDone}/${state.habits.length}`;
+
+  const tt = state.tasks.filter(t => t.date === todayStr || !t.done)
+    .sort((a,b)=> (a.done - b.done) || ({alta:0,media:1,baja:2}[a.prio]-{alta:0,media:1,baja:2}[b.prio]));
+  $("homeTaskCount").textContent = pend ? `${pend} pendiente${pend>1?"s":""}` : "todo hecho ✨";
+  $("homeTasks").innerHTML = tt.length
+    ? tt.map(t => `<div class="task ${t.done?'done':''}">
+        <input type="checkbox" data-task="${t.id}" ${t.done?'checked':''}>
+        <span class="txt">${esc(t.text)}</span>
+        ${t.routineId ? `<span class="recur">🔁</span>` : ""}
+        <span class="pill ${t.prio}">${t.prio}</span>
+      </div>`).join("")
+    : `<div class="empty">Sin tareas para hoy. Añádelas en la pestaña ✅</div>`;
+
+  $("homeHabits").innerHTML = state.habits.length
+    ? state.habits.map(h => { const on = !!h.log[todayStr], st = streakOf(h);
+        return `<button class="chip ${on?'on':''}" data-habit="${h.id}" data-day="${todayStr}">${on?'✓':'○'} ${esc(h.name)} ${st>0?`<span class="st">🔥${st}</span>`:''}</button>`;
+      }).join("")
+    : `<div class="empty">Crea hábitos en la pestaña 🔥</div>`;
+}
+
+// ---------- Finanzas ----------
+function renderCatSelect() { $("finCat").innerHTML = CATS.map(c => `<option value="${c}">${c}</option>`).join(""); }
+function selectedMonth() { return $("finMonth").value || curMonth(); }
+function renderFinance() {
+  const m = selectedMonth();
+  const exp = state.expenses.filter(e => e.date.startsWith(m));
+  const inc = state.incomes.filter(e => e.date.startsWith(m));
+  const total = exp.reduce((s,e)=> s + e.amount, 0);
+  $("finTotal").textContent = money(total);
+  const byCat = {};
+  exp.forEach(e => byCat[e.cat] = (byCat[e.cat]||0) + e.amount);
+  const groups = CATS.map((c,i)=>({cat:c, idx:i, val:byCat[c]||0})).filter(g=>g.val>0).sort((a,b)=>b.val-a.val);
+  renderDonut(groups, total);
+  $("finLegend").innerHTML = groups.length
+    ? groups.map(g => `<div class="lg"><span class="sw" style="background:${CAT_COLOR(g.idx)}"></span>${g.cat}<span class="amt">${money(g.val)}</span><span class="pct">${total? Math.round(g.val/total*100):0}%</span></div>`).join("")
+    : `<div class="empty">Sin gastos este mes todavía.</div>`;
+  // lista combinada de movimientos (gastos + ingresos)
+  const movs = [...exp.map(e => ({kind:"g", ...e})), ...inc.map(e => ({kind:"i", ...e}))].sort((a,b)=> b.date.localeCompare(a.date));
+  $("finList").innerHTML = movs.length ? movs.map(mv => mv.kind === "i"
+    ? `<div class="item income">
+        <span class="cat-dot" style="background:var(--good)"></span>
+        <div class="desc"><div class="t">${esc(mv.note) || "Ingreso"}</div><div class="s">Ingreso · ${mv.date.slice(8,10)}/${mv.date.slice(5,7)}</div></div>
+        <span class="val">+${money(mv.amount)}</span>
+        <button class="icon-btn" data-del-inc="${mv.id}" title="Eliminar">✕</button></div>`
+    : `<div class="item">
+        <span class="cat-dot" style="background:${CAT_COLOR(CATS.indexOf(mv.cat))}"></span>
+        <div class="desc"><div class="t">${esc(mv.note) || mv.cat}</div><div class="s">${mv.cat} · ${mv.date.slice(8,10)}/${mv.date.slice(5,7)}</div></div>
+        <span class="val">${money(mv.amount)}</span>
+        <button class="icon-btn" data-del-exp="${mv.id}" title="Eliminar">✕</button></div>`
+  ).join("") : `<div class="empty">Agrega tu primer movimiento 👇</div>`;
+  renderBalance(m);
+}
+
+function renderBalance(m) {
+  m = m || selectedMonth();
+  const inc = state.incomes.filter(e => e.date.startsWith(m)).reduce((s,e)=>s+e.amount, 0);
+  const out = state.expenses.filter(e => e.date.startsWith(m)).reduce((s,e)=>s+e.amount, 0);
+  const net = inc - out;
+  $("balIn").textContent = moneyShort(inc);
+  $("balOut").textContent = moneyShort(out);
+  const nb = $("balNet"); nb.textContent = moneyShort(net); nb.className = "bv " + (net >= 0 ? "pos" : "neg");
+  const budget = Number(state.config.budget) || 0;
+  const wrap = $("budgetWrap");
+  if (budget > 0) {
+    const pct = out / budget * 100;
+    const cls = pct >= 100 ? "over" : pct >= 80 ? "warn" : "";
+    wrap.innerHTML = `<div class="budget-head"><span>Presupuesto</span><span>${moneyShort(out)} / ${moneyShort(budget)}</span></div>
+      <div class="progress ${cls}"><span style="width:${Math.min(pct,100)}%"></span></div>
+      <div class="budget-msg ${pct>=100?'over':''}">${pct >= 100 ? `¡Te pasaste por ${moneyShort(out-budget)}! 🔴` : `Te queda ${moneyShort(budget-out)} (${Math.round(100-pct)}%)`}</div>`;
+  } else {
+    wrap.innerHTML = `<div class="budget-msg">Fija un presupuesto mensual en ⚙️ Ajustes para ver tu progreso.</div>`;
+  }
+}
+
+function renderGoals() {
+  $("goalList").innerHTML = state.goals.length
+    ? state.goals.map(g => {
+        const pct = g.target > 0 ? Math.min(g.saved / g.target * 100, 100) : 0;
+        const done = g.saved >= g.target;
+        return `<div class="goal">
+          <div class="goal-head">
+            <span class="goal-name">${done ? "🎉 " : ""}${esc(g.name)}</span>
+            <span class="goal-amt">${moneyShort(g.saved)} / ${moneyShort(g.target)}</span>
+            <button class="icon-btn" data-del-goal="${g.id}" title="Eliminar">✕</button>
+          </div>
+          <div class="progress"><span style="width:${pct}%;${done ? 'background:var(--good)' : ''}"></span></div>
+          <div class="goal-ctrls"><button class="ghost" data-goal-add="${g.id}">＋ Abonar</button></div>
+        </div>`;
+      }).join("")
+    : `<div class="empty">Crea una meta para empezar a ahorrar 🎯</div>`;
+}
+function renderDonut(groups, total) {
+  const size = 168, r = 65, sw = 26, cx = size/2, cy = size/2, C = 2*Math.PI*r;
+  const wrap = $("donutWrap");
+  if (!groups.length) {
+    wrap.innerHTML = `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" role="img" aria-label="Sin datos">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--hairline)" stroke-width="${sw}"/>
+      <text x="${cx}" y="${cy+5}" text-anchor="middle" fill="var(--muted)" font-size="13">Sin datos</text></svg>`;
+    return;
+  }
+  let off = 0;
+  const arcs = groups.map(g => {
+    const frac = g.val/total, len = frac*C;
+    const seg = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${CAT_COLOR(g.idx)}" stroke-width="${sw}"
+      stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-off}" transform="rotate(-90 ${cx} ${cy})">
+      <title>${g.cat}: ${money(g.val)} (${Math.round(frac*100)}%)</title></circle>`;
+    off += len + 2; return seg;
+  }).join("");
+  wrap.innerHTML = `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" role="img" aria-label="Gastos por categoría">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--hairline)" stroke-width="${sw}"/>
+    ${arcs}
+    <text x="${cx}" y="${cy-4}" text-anchor="middle" fill="var(--muted)" font-size="10" letter-spacing="0.5">TOTAL</text>
+    <text x="${cx}" y="${cy+14}" text-anchor="middle" fill="var(--text)" font-size="16" font-weight="700">${moneyShort(total)}</text>
+  </svg>`;
+}
+
+// ---------- Tareas ----------
+function rolloverTasks() {
+  let changed = false;
+  state.tasks.forEach(t => {
+    if (!t.created) t.created = t.date;
+    if (!t.done && t.date < todayStr) { t.date = todayStr; changed = true; }
+  });
+  const dow = new Date().getDay();
+  state.routines.forEach(rt => {
+    let due = false;
+    if (rt.repeat === "diario") due = true;
+    else if (rt.repeat === "laborables") due = dow >= 1 && dow <= 5;
+    else if (rt.repeat === "semanal") due = dow === rt.dow;
+    if (!due) return;
+    if (!state.tasks.some(t => t.routineId === rt.id && t.date === todayStr))
+      { state.tasks.push({ id: uid(), text: rt.text, prio: rt.prio, done: false, date: todayStr, created: todayStr, routineId: rt.id }); changed = true; }
+  });
+  if (changed) save();
+}
+function renderTasks() {
+  const list = state.tasks.filter(t => t.date === todayStr || !t.done)
+    .sort((a,b)=> (a.done - b.done) || ({alta:0,media:1,baja:2}[a.prio]-{alta:0,media:1,baja:2}[b.prio]));
+  const pending = state.tasks.filter(t=>!t.done).length;
+  $("taskCount").textContent = pending ? `${pending} pendiente${pending>1?"s":""}` : "todo hecho ✨";
+  $("taskList").innerHTML = list.length
+    ? list.map(t => `<div class="task ${t.done?'done':''}">
+        <input type="checkbox" data-task="${t.id}" ${t.done?'checked':''}>
+        <span class="txt">${esc(t.text)}</span>
+        ${t.routineId ? `<span class="recur" title="Recurrente">🔁</span>` : ""}
+        ${(!t.routineId && t.created && t.created < todayStr) ? `<span class="carried" title="Arrastrada desde ${t.created.slice(8,10)}/${t.created.slice(5,7)}">↪</span>` : ""}
+        <span class="pill ${t.prio}">${t.prio}</span>
+        <button class="icon-btn" data-del-task="${t.id}" title="Eliminar">✕</button>
+      </div>`).join("")
+    : `<div class="empty">Sin tareas. ¡Agrega una! 👆</div>`;
+  renderRoutines();
+}
+const REPEAT_LBL = { diario: "Diario", laborables: "Laborables", semanal: "Semanal" };
+function renderRoutines() {
+  const box = $("routinesBox");
+  if (!state.routines.length) { box.innerHTML = ""; return; }
+  box.innerHTML = `<div class="section-title">🔁 Rutinas activas</div>` + state.routines.map(rt =>
+    `<div class="rt"><span style="flex:1 1 auto;">${esc(rt.text)}</span>
+      <span class="rt-rep">${REPEAT_LBL[rt.repeat] || rt.repeat}</span>
+      <button class="icon-btn" data-del-routine="${rt.id}" title="Dejar de repetir">✕</button></div>`).join("");
+}
+
+// ---------- Hábitos ----------
+function last7() { const days = []; for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate()-i); days.push(d); } return days; }
+function streakOf(h) {
+  let s = 0; const d = new Date();
+  if (!h.log[ymd(d)]) d.setDate(d.getDate()-1);
+  while (h.log[ymd(d)]) { s++; d.setDate(d.getDate()-1); }
+  return s;
+}
+function renderHabits() {
+  const dl = ["D","L","M","X","J","V","S"];
+  const days = last7();
+  $("habitList").innerHTML = state.habits.length
+    ? state.habits.map(h => {
+        const st = streakOf(h);
+        const cells = days.map(d => {
+          const key = ymd(d), on = !!h.log[key], isToday = key === todayStr;
+          return `<div class="day ${isToday?'today':''}"><div class="dl">${dl[d.getDay()]}</div>
+            <div class="cell ${on?'on':''}" data-habit="${h.id}" data-day="${key}">${on?'✓':''}</div></div>`;
+        }).join("");
+        return `<div class="habit"><div class="habit-head">
+            <span class="habit-name">${esc(h.name)}</span>
+            <span class="streak">🔥 ${st} día${st!==1?'s':''}</span>
+            <button class="icon-btn" data-del-habit="${h.id}" title="Eliminar">✕</button>
+          </div><div class="week">${cells}</div></div>`;
+      }).join("")
+    : `<div class="empty">Crea tu primer hábito para empezar tu racha 🔥</div>`;
+}
+
+// ---------- Resumen por mes ----------
+function shiftMonth(mo, delta) { const [y, m] = mo.split("-").map(Number); const d = new Date(y, m - 1 + delta, 1); return `${d.getFullYear()}-${pad(d.getMonth()+1)}`; }
+function renderMonthlySummary() {
+  const now = new Date(); const months = [];
+  for (let i = 5; i >= 0; i--) { const d = new Date(now.getFullYear(), now.getMonth() - i, 1); months.push(`${d.getFullYear()}-${pad(d.getMonth()+1)}`); }
+  const totals = months.map(mo => state.expenses.filter(e => e.date.startsWith(mo)).reduce((s,e)=>s+e.amount, 0));
+  const max = Math.max(1, ...totals);
+  $("msChart").innerHTML = months.map((mo, i) => {
+    const h = totals[i] / max * 100;
+    const lbl = new Date(Number(mo.slice(0,4)), Number(mo.slice(5,7)) - 1, 1).toLocaleDateString("es", {month:"short"}).replace(".", "");
+    const isCur = mo === curMonth();
+    return `<div class="ms-col" title="${lbl}: ${money(totals[i])}">
+      <div class="ms-val">${totals[i] > 0 ? moneyShort(totals[i]) : ""}</div>
+      <div class="ms-bar-track"><div class="ms-bar ${isCur?'cur':''}" style="height:${totals[i] > 0 ? Math.max(h,2) : 0}%"></div></div>
+      <div class="ms-lbl">${lbl}</div></div>`;
+  }).join("");
+  const avg = totals.reduce((a,b)=>a+b, 0) / totals.length;
+  $("msAvg").textContent = `Promedio: ${money(avg)}`;
+}
+
+// ---------- Calendario ----------
+let calMonth = curMonth();
+function renderCalendar() {
+  const [y, m] = calMonth.split("-").map(Number);
+  $("calLabel").textContent = new Date(y, m - 1, 1).toLocaleDateString("es", {month:"long", year:"numeric"});
+  const firstDow = (new Date(y, m - 1, 1).getDay() + 6) % 7;
+  const days = new Date(y, m, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < firstDow; i++) cells.push('<div class="cal-cell empty-cell"></div>');
+  for (let d = 1; d <= days; d++) {
+    const key = `${calMonth}-${pad(d)}`;
+    const exp = state.expenses.filter(e => e.date === key).reduce((s,e)=>s+e.amount, 0);
+    const habCount = state.habits.filter(h => h.log[key]).length;
+    const w = state.weatherLog[key];
+    cells.push(`<div class="cal-cell ${key===todayStr?'today':''}" data-cal-day="${key}">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;">
+        <span class="cd-num">${d}</span>${w ? `<span class="cd-temp">${w.max}°</span>` : ""}</div>
+      <div class="cd-marks">
+        ${exp > 0 ? `<span class="cd-exp">${moneyShort(exp)}</span>` : ""}
+        ${habCount > 0 ? `<span class="cd-hab">🔥${habCount}</span>` : ""}</div></div>`);
+  }
+  $("calGrid").innerHTML = cells.join("");
+  fetchHistoryForMonth(calMonth);
+}
+function openDay(key) {
+  const [Y, M, D] = key.split("-").map(Number);
+  const dObj = new Date(Y, M - 1, D);
+  $("modalTitle").textContent = dObj.toLocaleDateString("es", {weekday:"long", day:"numeric", month:"long", year:"numeric"});
+  const w = state.weatherLog[key];
+  const exps = state.expenses.filter(e => e.date === key).sort((a,b)=>b.amount-a.amount);
+  const expTotal = exps.reduce((s,e)=>s+e.amount, 0);
+  const tasks = state.tasks.filter(t => t.date === key);
+  const habs = state.habits.filter(h => h.log[key]);
+  let html = "";
+  if (w) { const [ic, txt] = WCODE[w.code] || ["🌡️","—"]; html += `<div class="md-weather">${ic} <b>${txt}</b> · máx ${w.max}° · mín ${w.min}°</div>`; }
+  else html += `<div class="md-weather muted">Sin registro de clima para este día.</div>`;
+  html += `<div class="md-sec"><div class="md-h">💰 Gastos <span>${money(expTotal)}</span></div>`;
+  html += exps.length ? exps.map(e => `<div class="md-row"><span class="cat-dot" style="background:${CAT_COLOR(CATS.indexOf(e.cat))}"></span>${esc(e.note) || e.cat}<span class="md-amt">${money(e.amount)}</span></div>`).join("") : `<div class="md-empty">Sin gastos.</div>`;
+  html += `</div>`;
+  html += `<div class="md-sec"><div class="md-h">✅ Tareas</div>`;
+  html += tasks.length ? tasks.map(t => `<div class="md-row">${t.done ? "✔️" : "⬜"} <span style="${t.done?'color:var(--muted);text-decoration:line-through;':''}">${esc(t.text)}</span> <span class="pill ${t.prio}" style="margin-left:auto;">${t.prio}</span></div>`).join("") : `<div class="md-empty">Sin tareas.</div>`;
+  html += `</div>`;
+  html += `<div class="md-sec"><div class="md-h">🔥 Hábitos cumplidos</div>`;
+  html += habs.length ? habs.map(h => `<div class="md-row">✅ ${esc(h.name)}</div>`).join("") : `<div class="md-empty">Ninguno.</div>`;
+  html += `</div>`;
+  $("modalBody").innerHTML = html;
+  $("modal").classList.add("open");
+}
+function closeModal() { $("modal").classList.remove("open"); }
+
+// ---------- Config / tema ----------
+function applyTheme() {
+  const t = state.config.theme;
+  if (t === "auto") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.setAttribute("data-theme", t);
+  $("themeSel").value = t;
+}
+function renderConfig() {
+  $("cfgCity").value = state.config.city;
+  $("cfgCurrency").value = state.config.currency;
+  $("cfgBudget").value = state.config.budget ? state.config.budget : "";
+  applyTheme();
+}
+function renderFocus() {
+  if (state.focus.date !== todayStr) state.focus = { date: todayStr, text: "" };
+  $("focusNote").value = state.focus.text || "";
+}
+
+// ---------- Render maestro ----------
+function renderAll() { renderHome(); renderFinance(); renderMonthlySummary(); renderGoals(); renderCalendar(); renderTasks(); renderHabits(); }
+
+// ---------- Eventos: finanzas ----------
+let txType = "gasto";
+document.querySelectorAll("#txType .seg-btn").forEach(b => b.addEventListener("click", () => {
+  txType = b.dataset.type;
+  document.querySelectorAll("#txType .seg-btn").forEach(x => x.classList.toggle("active", x === b));
+  const isInc = txType === "ingreso";
+  $("finCat").style.display = isInc ? "none" : "";
+  $("finNote").placeholder = isInc ? "Fuente (opcional)" : "Nota (opcional)";
+  $("finSubmit").textContent = isInc ? "Agregar ingreso" : "Agregar gasto";
+}));
+$("finForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const amount = parseFloat($("finAmount").value);
+  if (!(amount > 0)) return;
+  const note = $("finNote").value.trim();
+  if (txType === "ingreso") state.incomes.push({ id: uid(), amount, note, date: todayStr });
+  else state.expenses.push({ id: uid(), amount, cat: $("finCat").value, note, date: todayStr });
+  $("finAmount").value = ""; $("finNote").value = "";
+  $("finMonth").value = curMonth();
+  save(); renderFinance(); renderMonthlySummary(); renderHome(); renderCalendar();
+});
+$("finMonth").addEventListener("change", renderFinance);
+
+// Metas de ahorro
+$("goalForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const name = $("goalName").value.trim(); const target = parseFloat($("goalTarget").value);
+  if (!name || !(target > 0)) return;
+  state.goals.push({ id: uid(), name, target, saved: 0 });
+  $("goalName").value = ""; $("goalTarget").value = "";
+  save(); renderGoals();
+});
+
+// ---------- Eventos: tareas ----------
+$("taskForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const text = $("taskText").value.trim(); if (!text) return;
+  const prio = $("taskPrio").value, repeat = $("taskRepeat").value;
+  let routineId;
+  if (repeat) { routineId = uid(); state.routines.push({ id: routineId, text, prio, repeat, dow: new Date().getDay() }); }
+  state.tasks.push({ id: uid(), text, prio, done: false, date: todayStr, created: todayStr, routineId });
+  $("taskText").value = ""; $("taskRepeat").value = "";
+  save(); renderTasks(); renderHome();
+});
+
+// ---------- Eventos: hábitos ----------
+$("habitForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const name = $("habitName").value.trim(); if (!name) return;
+  state.habits.push({ id: uid(), name, log: {} });
+  $("habitName").value = "";
+  save(); renderHabits(); renderHome();
+});
+
+// ---------- Foco ----------
+$("focusNote").addEventListener("input", e => { state.focus = { date: todayStr, text: e.target.value }; save(); });
+
+// ---------- Delegación de clicks ----------
+document.body.addEventListener("click", e => {
+  const b = e.target.closest("[data-del-exp],[data-del-inc],[data-del-task],[data-del-habit],[data-del-routine],[data-del-goal],[data-goal-add],[data-habit]");
+  if (!b) return;
+  if (b.dataset.delExp) { state.expenses = state.expenses.filter(x=>x.id!==b.dataset.delExp); save(); renderFinance(); renderMonthlySummary(); renderHome(); renderCalendar(); }
+  else if (b.dataset.delInc) { state.incomes = state.incomes.filter(x=>x.id!==b.dataset.delInc); save(); renderFinance(); renderHome(); }
+  else if (b.dataset.delGoal) { state.goals = state.goals.filter(x=>x.id!==b.dataset.delGoal); save(); renderGoals(); }
+  else if (b.dataset.goalAdd) {
+    const g = state.goals.find(x=>x.id===b.dataset.goalAdd); if (!g) return;
+    const v = prompt(`¿Cuánto quieres abonar a "${g.name}"?`);
+    if (v == null) return;
+    const amt = parseFloat(String(v).replace(",", "."));
+    if (amt > 0) { g.saved = Math.round((g.saved + amt) * 100) / 100; save(); renderGoals(); }
+  }
+  else if (b.dataset.delTask) { state.tasks = state.tasks.filter(x=>x.id!==b.dataset.delTask); save(); renderTasks(); renderHome(); }
+  else if (b.dataset.delRoutine) { state.routines = state.routines.filter(x=>x.id!==b.dataset.delRoutine); save(); renderRoutines(); }
+  else if (b.dataset.habit) {
+    const h = state.habits.find(x=>x.id===b.dataset.habit); if (!h) return;
+    const day = b.dataset.day;
+    if (h.log[day]) delete h.log[day]; else h.log[day] = true;
+    save(); renderHabits(); renderHome(); renderCalendar();
+  }
+});
+// Checkbox de tareas (funciona en Inicio y en Tareas)
+document.body.addEventListener("change", e => {
+  if (e.target.matches("[data-task]")) {
+    const t = state.tasks.find(x=>x.id===e.target.dataset.task);
+    if (t) { t.done = e.target.checked; save(); renderTasks(); renderHome(); }
+  }
+});
+
+// ---------- Calendario ----------
+$("calPrev").addEventListener("click", () => { calMonth = shiftMonth(calMonth, -1); renderCalendar(); });
+$("calNext").addEventListener("click", () => { calMonth = shiftMonth(calMonth, 1); renderCalendar(); });
+$("calGrid").addEventListener("click", e => { const c = e.target.closest("[data-cal-day]"); if (c) openDay(c.dataset.calDay); });
+$("modalClose").addEventListener("click", closeModal);
+$("modal").addEventListener("click", e => { if (e.target.id === "modal") closeModal(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") { closeModal(); closeDrawer(); } });
+
+// ---------- Config ----------
+$("cfgCitySave").addEventListener("click", () => {
+  state.config.city = $("cfgCity").value.trim();
+  state.config.lat = null; state.config.lon = null; state.config.geoCity = "";
+  fetchedMonths.clear();
+  save(); loadWeather();
+  if (state.config.city) switchView("home");
+});
+$("cfgCurrency").addEventListener("input", e => { state.config.currency = e.target.value || "$"; save(); renderFinance(); renderMonthlySummary(); renderCalendar(); renderHome(); renderGoals(); });
+$("cfgBudget").addEventListener("input", e => { state.config.budget = parseFloat(e.target.value) || 0; save(); renderBalance(); });
+$("themeSel").addEventListener("change", e => { state.config.theme = e.target.value; save(); applyTheme(); });
+
+// ---------- Respaldo ----------
+$("btnExport").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = `panel-personal-${todayStr}.json`; a.click(); URL.revokeObjectURL(a.href);
+});
+$("btnImport").addEventListener("click", () => $("fileImport").click());
+$("fileImport").addEventListener("change", e => {
+  const f = e.target.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      state = Object.assign(defaultState(), JSON.parse(rd.result));
+      fetchedMonths.clear();
+      save(); initValues(); renderAll(); loadWeather();
+      alert("✅ Respaldo importado correctamente.");
+    } catch { alert("❌ El archivo no es un respaldo válido."); }
+  };
+  rd.readAsText(f);
+});
+function csvCell(v) { v = String(v == null ? "" : v); return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+$("btnCsv").addEventListener("click", () => {
+  if (!state.expenses.length) { alert("Aún no tienes gastos que exportar."); return; }
+  const rows = [["fecha","categoria","nota","monto"]];
+  state.expenses.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(e => rows.push([e.date, e.cat, e.note || "", String(e.amount)]));
+  const csv = rows.map(r => r.map(csvCell).join(",")).join("\r\n");
+  const blob = new Blob(["﻿" + csv], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = `gastos-${todayStr}.csv`; a.click(); URL.revokeObjectURL(a.href);
+});
+$("btnReset").addEventListener("click", () => {
+  if (confirm("¿Seguro que quieres borrar TODOS tus datos? Esto no se puede deshacer.")) {
+    state = defaultState(); fetchedMonths.clear(); calMonth = curMonth();
+    save(); initValues(); renderAll(); loadWeather(); switchView("home");
+  }
+});
+
+// ---------- Pomodoro ----------
+const POMO = { work: 25 * 60, brk: 5 * 60 };
+let pomoMode = "work", pomoLeft = POMO.work, pomoTimer = null;
+function pomoRender() {
+  $("pomoTime").textContent = `${pad(Math.floor(pomoLeft/60))}:${pad(pomoLeft%60)}`;
+  $("pomoMode").textContent = pomoMode === "work" ? "Enfoque" : "Descanso";
+  $("pomo").classList.toggle("break", pomoMode === "brk");
+  $("pomoStart").textContent = pomoTimer ? "Pausar" : "Iniciar";
+}
+function pomoTick() {
+  pomoLeft--;
+  if (pomoLeft <= 0) {
+    clearInterval(pomoTimer); pomoTimer = null;
+    pomoBeep(); notify(pomoMode === "work" ? "¡Tiempo de descanso! 🍵" : "¡A enfocarse de nuevo! 🍅");
+    const el = $("pomo"); el.classList.add("ring"); setTimeout(() => el.classList.remove("ring"), 2600);
+    pomoMode = pomoMode === "work" ? "brk" : "work";
+    pomoLeft = pomoMode === "work" ? POMO.work : POMO.brk;
+  }
+  pomoRender();
+}
+function pomoToggle() {
+  if (pomoTimer) { clearInterval(pomoTimer); pomoTimer = null; }
+  else { ensureNotifyPermission(); pomoTimer = setInterval(pomoTick, 1000); }
+  pomoRender();
+}
+function pomoReset() { clearInterval(pomoTimer); pomoTimer = null; pomoLeft = pomoMode === "work" ? POMO.work : POMO.brk; pomoRender(); }
+function pomoSkip() { clearInterval(pomoTimer); pomoTimer = null; pomoMode = pomoMode === "work" ? "brk" : "work"; pomoLeft = pomoMode === "work" ? POMO.work : POMO.brk; pomoRender(); }
+function pomoBeep() {
+  try {
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = "sine"; o.frequency.value = 880; o.connect(g); g.connect(ac.destination);
+    g.gain.setValueAtTime(0.0001, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.3, ac.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 0.7);
+    o.start(); o.stop(ac.currentTime + 0.7);
+  } catch {}
+}
+function ensureNotifyPermission() { if ("Notification" in window && Notification.permission === "default") Notification.requestPermission(); }
+function notify(msg) { if ("Notification" in window && Notification.permission === "granted") { try { new Notification("Panel Personal", { body: msg }); } catch {} } }
+$("pomoStart").addEventListener("click", pomoToggle);
+$("pomoReset").addEventListener("click", pomoReset);
+$("pomoSkip").addEventListener("click", pomoSkip);
+
+// ---------- PWA ----------
+if (location.protocol.startsWith("http")) {
+  if (!document.querySelector('link[rel="manifest"]')) {
+    const l = document.createElement("link"); l.rel = "manifest"; l.href = "manifest.webmanifest"; document.head.appendChild(l);
+  }
+  if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+
+// ---------- Init ----------
+function initValues() { $("finMonth").value = curMonth(); renderConfig(); renderFocus(); }
+function init() {
+  renderChrome();
+  renderCatSelect();
+  rolloverTasks();
+  initValues();
+  renderAll();
+  pomoRender();
+  switchView("home");
+  loadWeather();
+}
+init();
+</script>
+</body>
+</html>
