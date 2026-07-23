@@ -10,3 +10,6 @@ Desktop.ini
 # Temporales
 *.tmp
 *.log
+
+# Herramientas de desarrollo (lint/format), no forman parte de la app en producción
+node_modules/

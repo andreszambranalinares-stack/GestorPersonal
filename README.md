@@ -21,18 +21,20 @@ navegador (`localStorage`), no hay servidor ni cuentas.
 Abre `index.html` en tu navegador, o publícalo con **GitHub Pages**:
 
 1. Sube estos archivos al repositorio.
-2. **Settings → Pages** → *Branch*: `main` / carpeta `/ (root)`.
+2. **Settings → Pages** → _Branch_: `main` / carpeta `/ (root)`.
 3. Entra a `https://TU-USUARIO.github.io/TU-REPO/` y, en el móvil, usa
-   *Añadir a pantalla de inicio* para instalarla.
+   _Añadir a pantalla de inicio_ para instalarla.
 
 ## 🗂️ Estructura
 
-| Archivo | Qué es |
-|---|---|
-| `index.html` | La app completa (HTML + CSS + JS, sin dependencias) |
-| `manifest.webmanifest` | Metadatos de la PWA |
-| `sw.js` | Service worker (cache offline) |
-| `icon.svg` | Ícono de la app |
+| Archivo                | Qué es                                                                                                                                                                                                                         |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `index.html`           | Estructura HTML de la app (sin dependencias)                                                                                                                                                                                   |
+| `css/style.css`        | Estilos de la app                                                                                                                                                                                                              |
+| `js/*.js`              | Lógica de la app, dividida por sección (estado, finanzas, tareas, hábitos, calendario, clima, respaldo, pomodoro, etc.). Se cargan como scripts clásicos (sin build step) para que la app siga abriendo directo con `file://`. |
+| `manifest.webmanifest` | Metadatos de la PWA                                                                                                                                                                                                            |
+| `sw.js`                | Service worker (cache offline)                                                                                                                                                                                                 |
+| `icon.svg`             | Ícono de la app                                                                                                                                                                                                                |
 
 ## 🔒 Privacidad
 
