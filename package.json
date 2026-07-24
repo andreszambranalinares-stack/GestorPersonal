@@ -1,0 +1,18 @@
+{
+  "name": "panel-personal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Panel Personal — PWA estática de finanzas, tareas, hábitos, calendario y clima.",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.19.0",
+    "eslint": "^9.19.0",
+    "eslint-config-prettier": "^9.1.0",
+    "globals": "^15.14.0",
+    "prettier": "^3.4.2"
+  }
+}
