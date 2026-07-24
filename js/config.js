@@ -12,7 +12,39 @@ function renderConfig() {
   $("cfgCurrency").value = state.config.currency;
   $("cfgBudget").value = state.config.budget ? state.config.budget : "";
   applyTheme();
+  renderCatSelects();
+  renderCategories();
 }
+
+// ---------- Categorías personalizadas ----------
+function renderCategories() {
+  const box = $("categoryList");
+  if (!box) return;
+  box.innerHTML = state.categories
+    .map(
+      (c, i) =>
+        `<div class="rt"><span class="cat-dot" style="background:${CAT_COLOR(i)}"></span>
+      <span style="flex:1 1 auto;">${esc(c)}</span>
+      ${c === "Otros" ? `<span class="rt-rep" title="Categoría de reserva">fija</span>` : `<button class="icon-btn" data-del-cat="${esc(c)}" title="Eliminar categoría">✕</button>`}</div>`
+    )
+    .join("");
+}
+$("categoryForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const name = $("categoryName").value.trim();
+  if (!name) return;
+  if (state.categories.some((c) => c.toLowerCase() === name.toLowerCase())) {
+    toast("Esa categoría ya existe; sus gastos se suman bajo ese nombre.", { type: "warn" });
+    $("categoryName").value = "";
+    return;
+  }
+  state.categories.push(name);
+  $("categoryName").value = "";
+  save();
+  renderCategories();
+  renderCatSelects();
+  toast(`Categoría "${name}" añadida.`, { type: "ok" });
+});
 function renderFocus() {
   if (state.focus.date !== todayStr) state.focus = { date: todayStr, text: "" };
   $("focusNote").value = state.focus.text || "";

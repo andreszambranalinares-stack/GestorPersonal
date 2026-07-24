@@ -8,8 +8,11 @@ navegador (`localStorage`), no hay servidor ni cuentas.
 
 - **💰 Finanzas Pro** — gastos e ingresos, saldo neto del mes, gráfico por categoría,
   resumen de los últimos 6 meses, **presupuesto mensual con alerta** y **metas de ahorro**.
-- **✅ Tareas** — prioridades, tareas que se arrastran al día siguiente, **tareas recurrentes**
-  y **temporizador Pomodoro** con aviso.
+  Incluye **categorías personalizables**, **gastos fijos recurrentes** (alquiler,
+  suscripciones…) que se registran solos cada mes, **edición** de movimientos y un
+  **buscador/filtro** por nota, categoría y tipo.
+- **✅ Tareas** — prioridades, tareas que se arrastran al día siguiente, **tareas recurrentes**,
+  **edición** de tareas y **temporizador Pomodoro** con aviso.
 - **🔥 Hábitos** — seguimiento diario con **racha** y vista de la semana.
 - **📅 Calendario** — toca un día para ver gastos, tareas, hábitos y el **clima** de esa fecha.
 - **🌤️ Clima en vivo** vía [Open-Meteo](https://open-meteo.com) (sin API key).

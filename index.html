@@ -148,8 +148,57 @@
             <select class="grow0" id="finCat" style="flex: 1 1 130px"></select>
             <input type="text" id="finNote" maxlength="140" placeholder="Nota (opcional)" style="flex: 1 1 100%" />
             <button class="btn" type="submit" id="finSubmit" style="flex: 1 1 100%">Agregar gasto</button>
+            <button class="ghost grow0" type="button" id="finCancel" style="flex: 0 0 auto; display: none">
+              Cancelar
+            </button>
           </form>
+          <div class="row" style="margin-top: 14px">
+            <input type="search" id="finSearch" placeholder="🔍 Buscar por nota o categoría" style="flex: 2 1 160px" />
+            <select class="grow0" id="finFilterCat" style="flex: 1 1 130px"></select>
+            <select class="grow0" id="finFilterType" style="flex: 1 1 110px">
+              <option value="">Gastos e ingresos</option>
+              <option value="g">Solo gastos</option>
+              <option value="i">Solo ingresos</option>
+            </select>
+          </div>
+          <div class="mini" id="finFilterCount" style="text-align: right"></div>
           <div class="list" id="finList"></div>
+        </div>
+
+        <div class="card">
+          <h2><span class="em">🔁</span> Gastos fijos</h2>
+          <div class="mini" style="margin-bottom: 10px">
+            Se registran automáticamente cada mes (alquiler, suscripciones…). El "día" es el día del mes en que se
+            anota.
+          </div>
+          <form class="row" id="fixedForm">
+            <input
+              class="grow0"
+              type="number"
+              step="0.01"
+              min="0"
+              inputmode="decimal"
+              id="fixedAmount"
+              placeholder="Monto"
+              style="flex: 1 1 100px"
+              required
+            />
+            <select class="grow0" id="fixedCat" style="flex: 1 1 120px"></select>
+            <input
+              class="grow0"
+              type="number"
+              min="1"
+              max="28"
+              step="1"
+              id="fixedDay"
+              placeholder="Día"
+              style="flex: 1 1 70px"
+              required
+            />
+            <input type="text" id="fixedNote" maxlength="140" placeholder="Nota (ej. Netflix)" style="flex: 1 1 100%" />
+            <button class="btn" type="submit" style="flex: 1 1 100%">Añadir gasto fijo</button>
+          </form>
+          <div id="fixedList" style="margin-top: 12px"></div>
         </div>
 
         <div class="card">
@@ -209,7 +258,10 @@
                 <option value="laborables">🔁 Laborables</option>
                 <option value="semanal">🔁 Semanal</option>
               </select>
-              <button class="btn grow0" type="submit" style="flex: 0 0 auto">Añadir</button>
+              <button class="btn grow0" type="submit" id="taskSubmit" style="flex: 0 0 auto">Añadir</button>
+              <button class="ghost grow0" type="button" id="taskCancel" style="flex: 0 0 auto; display: none">
+                Cancelar
+              </button>
             </div>
           </form>
           <div class="list" id="taskList"></div>
@@ -299,6 +351,25 @@
           </div>
           <div class="mini">
             Al fijar un presupuesto verás una barra de progreso y un aviso cuando te acerques o lo superes.
+          </div>
+        </div>
+        <div class="card">
+          <h2><span class="em">🏷️</span> Categorías de gasto</h2>
+          <form class="row" id="categoryForm">
+            <input
+              type="text"
+              id="categoryName"
+              maxlength="40"
+              placeholder="Nueva categoría (ej. Mascotas)"
+              style="flex: 2 1 160px"
+              required
+            />
+            <button class="btn grow0" type="submit" style="flex: 0 0 auto">Añadir</button>
+          </form>
+          <div id="categoryList" style="margin-top: 12px"></div>
+          <div class="mini">
+            Si añades una categoría con un nombre que ya existe, no se duplica: los gastos se suman bajo ese mismo
+            nombre. "Otros" es la categoría de reserva y no se puede eliminar.
           </div>
         </div>
         <div class="card">

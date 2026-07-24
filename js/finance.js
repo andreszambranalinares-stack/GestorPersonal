@@ -1,21 +1,38 @@
 "use strict";
 
 // ---------- Finanzas ----------
-function renderCatSelect() {
-  $("finCat").innerHTML = CATS.map((c) => `<option value="${c}">${c}</option>`).join("");
+// Rellena todos los <select> de categorías desde state.categories.
+function renderCatSelects() {
+  const opts = state.categories.map((c) => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
+  const finCat = $("finCat");
+  if (finCat) finCat.innerHTML = opts;
+  const fixedCat = $("fixedCat");
+  if (fixedCat) fixedCat.innerHTML = opts;
+  const filterCat = $("finFilterCat");
+  if (filterCat) {
+    const prev = filterCat.value;
+    filterCat.innerHTML = `<option value="">Todas las categorías</option>` + opts;
+    filterCat.value = state.categories.includes(prev) ? prev : "";
+  }
 }
 function selectedMonth() {
   return $("finMonth").value || curMonth();
 }
+// Estado del buscador/filtros (solo afecta a la lista de movimientos).
+let finSearch = "";
+let finFilterCat = "";
+let finFilterType = "";
 function renderFinance() {
   const m = selectedMonth();
   const exp = state.expenses.filter((e) => e.date.startsWith(m));
   const inc = state.incomes.filter((e) => e.date.startsWith(m));
   const total = exp.reduce((s, e) => s + e.amount, 0);
   $("finTotal").textContent = money(total);
+  // Agregación por NOMBRE de categoría: nombres idénticos se suman de forma natural.
   const byCat = {};
   exp.forEach((e) => (byCat[e.cat] = (byCat[e.cat] || 0) + e.amount));
-  const groups = CATS.map((c, i) => ({ cat: c, idx: i, val: byCat[c] || 0 }))
+  const groups = Object.keys(byCat)
+    .map((name) => ({ cat: name, color: catColor(name), val: byCat[name] }))
     .filter((g) => g.val > 0)
     .sort((a, b) => b.val - a.val);
   renderDonut(groups, total);
@@ -23,14 +40,26 @@ function renderFinance() {
     ? groups
         .map(
           (g) =>
-            `<div class="lg"><span class="sw" style="background:${CAT_COLOR(g.idx)}"></span>${esc(g.cat)}<span class="amt">${money(g.val)}</span><span class="pct">${total ? Math.round((g.val / total) * 100) : 0}%</span></div>`
+            `<div class="lg"><span class="sw" style="background:${g.color}"></span>${esc(g.cat)}<span class="amt">${money(g.val)}</span><span class="pct">${total ? Math.round((g.val / total) * 100) : 0}%</span></div>`
         )
         .join("")
     : `<div class="empty">Sin gastos este mes todavía.</div>`;
   // lista combinada de movimientos (gastos + ingresos)
-  const movs = [...exp.map((e) => ({ kind: "g", ...e })), ...inc.map((e) => ({ kind: "i", ...e }))].sort((a, b) =>
+  const allMovs = [...exp.map((e) => ({ kind: "g", ...e })), ...inc.map((e) => ({ kind: "i", ...e }))].sort((a, b) =>
     b.date.localeCompare(a.date)
   );
+  const q = finSearch.trim().toLowerCase();
+  const movs = allMovs.filter((mv) => {
+    if (finFilterType && mv.kind !== finFilterType) return false;
+    if (finFilterCat && (mv.kind !== "g" || mv.cat !== finFilterCat)) return false;
+    if (q) {
+      const hay = `${mv.note || ""} ${mv.kind === "g" ? mv.cat : "ingreso"}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  const filtering = q || finFilterCat || finFilterType;
+  $("finFilterCount").textContent = filtering ? `${movs.length} de ${allMovs.length}` : "";
   $("finList").innerHTML = movs.length
     ? movs
         .map((mv) =>
@@ -39,15 +68,17 @@ function renderFinance() {
         <span class="cat-dot" style="background:var(--good)"></span>
         <div class="desc"><div class="t">${esc(mv.note) || "Ingreso"}</div><div class="s">Ingreso · ${mv.date.slice(8, 10)}/${mv.date.slice(5, 7)}</div></div>
         <span class="val">+${money(mv.amount)}</span>
+        <button class="icon-btn" data-edit-inc="${mv.id}" title="Editar">✏️</button>
         <button class="icon-btn" data-del-inc="${mv.id}" title="Eliminar">✕</button></div>`
             : `<div class="item">
-        <span class="cat-dot" style="background:${CAT_COLOR(CATS.indexOf(mv.cat))}"></span>
+        <span class="cat-dot" style="background:${catColor(mv.cat)}"></span>
         <div class="desc"><div class="t">${esc(mv.note) || esc(mv.cat)}</div><div class="s">${esc(mv.cat)} · ${mv.date.slice(8, 10)}/${mv.date.slice(5, 7)}</div></div>
         <span class="val">${money(mv.amount)}</span>
+        <button class="icon-btn" data-edit-exp="${mv.id}" title="Editar">✏️</button>
         <button class="icon-btn" data-del-exp="${mv.id}" title="Eliminar">✕</button></div>`
         )
         .join("")
-    : `<div class="empty">Agrega tu primer movimiento 👇</div>`;
+    : `<div class="empty">${filtering ? "Ningún movimiento coincide con el filtro." : "Agrega tu primer movimiento 👇"}</div>`;
   renderBalance(m);
 }
 
@@ -112,7 +143,7 @@ function renderDonut(groups, total) {
     .map((g) => {
       const frac = g.val / total,
         len = frac * C;
-      const seg = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${CAT_COLOR(g.idx)}" stroke-width="${sw}"
+      const seg = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${g.color}" stroke-width="${sw}"
       stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-off}" transform="rotate(-90 ${cx} ${cy})">
       <title>${esc(g.cat)}: ${money(g.val)} (${Math.round(frac * 100)}%)</title></circle>`;
       off += len + 2;
@@ -163,33 +194,148 @@ function renderMonthlySummary() {
 
 // ---------- Eventos: finanzas ----------
 let txType = "gasto";
+let editingTx = null; // {kind, id} cuando se está editando un movimiento
+function setTxType(type) {
+  txType = type;
+  document.querySelectorAll("#txType .seg-btn").forEach((x) => x.classList.toggle("active", x.dataset.type === type));
+  const isInc = type === "ingreso";
+  $("finCat").style.display = isInc ? "none" : "";
+  $("finNote").placeholder = isInc ? "Fuente (opcional)" : "Nota (opcional)";
+  if (!editingTx) $("finSubmit").textContent = isInc ? "Agregar ingreso" : "Agregar gasto";
+}
 document.querySelectorAll("#txType .seg-btn").forEach((b) =>
   b.addEventListener("click", () => {
-    txType = b.dataset.type;
-    document.querySelectorAll("#txType .seg-btn").forEach((x) => x.classList.toggle("active", x === b));
-    const isInc = txType === "ingreso";
-    $("finCat").style.display = isInc ? "none" : "";
-    $("finNote").placeholder = isInc ? "Fuente (opcional)" : "Nota (opcional)";
-    $("finSubmit").textContent = isInc ? "Agregar ingreso" : "Agregar gasto";
+    if (editingTx) return; // el tipo queda bloqueado mientras se edita
+    setTxType(b.dataset.type);
   })
 );
+function startEditTx(kind, id) {
+  const rec = kind === "i" ? state.incomes.find((x) => x.id === id) : state.expenses.find((x) => x.id === id);
+  if (!rec) return;
+  editingTx = { kind, id };
+  setTxType(kind === "i" ? "ingreso" : "gasto");
+  $("finAmount").value = rec.amount;
+  $("finNote").value = rec.note || "";
+  if (kind === "g") $("finCat").value = rec.cat;
+  $("finSubmit").textContent = "Guardar cambios";
+  $("txType").style.display = "none"; // no se puede cambiar gasto↔ingreso al editar
+  $("finCancel").style.display = "";
+  $("finAmount").focus();
+}
+function cancelEditTx() {
+  editingTx = null;
+  $("finAmount").value = "";
+  $("finNote").value = "";
+  $("txType").style.display = "";
+  $("finCancel").style.display = "none";
+  setTxType(txType);
+}
 $("finForm").addEventListener("submit", (e) => {
   e.preventDefault();
   const amount = parseFloat($("finAmount").value);
   if (!(amount > 0)) return;
   const note = $("finNote").value.trim();
-  if (txType === "ingreso") state.incomes.push({ id: uid(), amount, note, date: todayStr });
-  else state.expenses.push({ id: uid(), amount, cat: $("finCat").value, note, date: todayStr });
-  $("finAmount").value = "";
-  $("finNote").value = "";
-  $("finMonth").value = curMonth();
+  if (editingTx) {
+    const rec =
+      editingTx.kind === "i"
+        ? state.incomes.find((x) => x.id === editingTx.id)
+        : state.expenses.find((x) => x.id === editingTx.id);
+    if (rec) {
+      rec.amount = amount;
+      rec.note = note;
+      if (editingTx.kind === "g") rec.cat = $("finCat").value;
+    }
+    cancelEditTx();
+  } else {
+    if (txType === "ingreso") state.incomes.push({ id: uid(), amount, note, date: todayStr });
+    else state.expenses.push({ id: uid(), amount, cat: $("finCat").value, note, date: todayStr });
+    $("finAmount").value = "";
+    $("finNote").value = "";
+    $("finMonth").value = curMonth();
+  }
   save();
   renderFinance();
   renderMonthlySummary();
   renderHome();
   renderCalendar();
 });
+$("finCancel").addEventListener("click", cancelEditTx);
 $("finMonth").addEventListener("change", renderFinance);
+
+// Buscar / filtrar movimientos (solo recorta la lista, no el donut ni el balance)
+$("finSearch").addEventListener("input", (e) => {
+  finSearch = e.target.value;
+  renderFinance();
+});
+$("finFilterCat").addEventListener("change", (e) => {
+  finFilterCat = e.target.value;
+  renderFinance();
+});
+$("finFilterType").addEventListener("change", (e) => {
+  finFilterType = e.target.value;
+  renderFinance();
+});
+
+// ---------- Gastos fijos recurrentes ----------
+function rolloverFixedExpenses() {
+  let changed = false;
+  const today = new Date().getDate();
+  const m = curMonth();
+  state.fixedExpenses.forEach((fe) => {
+    if (today < fe.day) return; // aún no toca este mes
+    const already = state.expenses.some((e) => e.fixedId === fe.id && e.date.startsWith(m));
+    if (already) return;
+    state.expenses.push({
+      id: uid(),
+      amount: fe.amount,
+      cat: fe.cat,
+      note: fe.note,
+      date: `${m}-${pad(fe.day)}`,
+      fixedId: fe.id,
+    });
+    changed = true;
+  });
+  if (changed) save();
+}
+function renderFixedExpenses() {
+  const box = $("fixedList");
+  if (!box) return;
+  box.innerHTML = state.fixedExpenses.length
+    ? state.fixedExpenses
+        .map(
+          (fe) =>
+            `<div class="rt"><span class="cat-dot" style="background:${catColor(fe.cat)}"></span>
+        <span style="flex:1 1 auto;">${esc(fe.note) || esc(fe.cat)}<span class="s" style="color:var(--muted);"> · ${esc(fe.cat)}</span></span>
+        <span class="rt-rep">día ${fe.day} · ${money(fe.amount)}</span>
+        <button class="icon-btn" data-del-fixed="${fe.id}" title="Eliminar gasto fijo">✕</button></div>`
+        )
+        .join("")
+    : `<div class="empty">Sin gastos fijos. Añade alquiler, suscripciones, etc. 👇</div>`;
+}
+$("fixedForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const amount = parseFloat($("fixedAmount").value);
+  let day = parseInt($("fixedDay").value, 10);
+  if (!(amount > 0)) return;
+  if (!(day >= 1 && day <= 28)) day = 1;
+  state.fixedExpenses.push({
+    id: uid(),
+    amount,
+    cat: $("fixedCat").value,
+    note: $("fixedNote").value.trim(),
+    day,
+  });
+  $("fixedAmount").value = "";
+  $("fixedNote").value = "";
+  $("fixedDay").value = "";
+  save();
+  rolloverFixedExpenses(); // registra ya el del mes en curso si corresponde
+  renderFixedExpenses();
+  renderFinance();
+  renderMonthlySummary();
+  renderHome();
+  renderCalendar();
+});
 
 // Metas de ahorro
 $("goalForm").addEventListener("submit", (e) => {

@@ -48,7 +48,7 @@ function openDay(key) {
     ? exps
         .map(
           (e) =>
-            `<div class="md-row"><span class="cat-dot" style="background:${CAT_COLOR(CATS.indexOf(e.cat))}"></span>${esc(e.note) || esc(e.cat)}<span class="md-amt">${money(e.amount)}</span></div>`
+            `<div class="md-row"><span class="cat-dot" style="background:${catColor(e.cat)}"></span>${esc(e.note) || esc(e.cat)}<span class="md-amt">${money(e.amount)}</span></div>`
         )
         .join("")
     : `<div class="md-empty">Sin gastos.</div>`;
