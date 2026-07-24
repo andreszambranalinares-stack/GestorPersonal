@@ -47,6 +47,7 @@ function renderTasks() {
         ${t.routineId ? `<span class="recur" title="Recurrente">🔁</span>` : ""}
         ${!t.routineId && t.created && t.created < todayStr ? `<span class="carried" title="Arrastrada desde ${t.created.slice(8, 10)}/${t.created.slice(5, 7)}">↪</span>` : ""}
         <span class="pill ${esc(t.prio)}">${esc(t.prio)}</span>
+        <button class="icon-btn" data-edit-task="${t.id}" title="Editar">✏️</button>
         <button class="icon-btn" data-del-task="${t.id}" title="Eliminar">✕</button>
       </div>`
         )
@@ -75,21 +76,51 @@ function renderRoutines() {
 }
 
 // ---------- Eventos: tareas ----------
+let editingTask = null; // id de la tarea en edición
+function startEditTask(id) {
+  const t = state.tasks.find((x) => x.id === id);
+  if (!t) return;
+  editingTask = id;
+  $("taskText").value = t.text;
+  $("taskPrio").value = t.prio;
+  $("taskRepeat").value = "";
+  $("taskRepeat").style.display = "none"; // la repetición no aplica al editar una tarea existente
+  $("taskSubmit").textContent = "Guardar";
+  $("taskCancel").style.display = "";
+  $("taskText").focus();
+}
+function cancelEditTask() {
+  editingTask = null;
+  $("taskText").value = "";
+  $("taskRepeat").style.display = "";
+  $("taskSubmit").textContent = "Añadir";
+  $("taskCancel").style.display = "none";
+}
 $("taskForm").addEventListener("submit", (e) => {
   e.preventDefault();
   const text = $("taskText").value.trim();
   if (!text) return;
-  const prio = $("taskPrio").value,
-    repeat = $("taskRepeat").value;
-  let routineId;
-  if (repeat) {
-    routineId = uid();
-    state.routines.push({ id: routineId, text, prio, repeat, dow: new Date().getDay() });
+  const prio = $("taskPrio").value;
+  if (editingTask) {
+    const t = state.tasks.find((x) => x.id === editingTask);
+    if (t) {
+      t.text = text;
+      t.prio = prio;
+    }
+    cancelEditTask();
+  } else {
+    const repeat = $("taskRepeat").value;
+    let routineId;
+    if (repeat) {
+      routineId = uid();
+      state.routines.push({ id: routineId, text, prio, repeat, dow: new Date().getDay() });
+    }
+    state.tasks.push({ id: uid(), text, prio, done: false, date: todayStr, created: todayStr, routineId });
+    $("taskText").value = "";
+    $("taskRepeat").value = "";
   }
-  state.tasks.push({ id: uid(), text, prio, done: false, date: todayStr, created: todayStr, routineId });
-  $("taskText").value = "";
-  $("taskRepeat").value = "";
   save();
   renderTasks();
   renderHome();
 });
+$("taskCancel").addEventListener("click", cancelEditTask);

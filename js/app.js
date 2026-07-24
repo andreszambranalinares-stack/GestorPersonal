@@ -4,6 +4,7 @@
 function renderAll() {
   renderHome();
   renderFinance();
+  renderFixedExpenses();
   renderMonthlySummary();
   renderGoals();
   renderCalendar();
@@ -14,10 +15,42 @@ function renderAll() {
 // ---------- Delegación de clicks ----------
 document.body.addEventListener("click", (e) => {
   const b = e.target.closest(
-    "[data-del-exp],[data-del-inc],[data-del-task],[data-del-habit],[data-del-routine],[data-del-goal],[data-goal-add],[data-habit]"
+    "[data-del-exp],[data-del-inc],[data-del-task],[data-del-habit],[data-del-routine],[data-del-goal],[data-goal-add],[data-habit],[data-edit-exp],[data-edit-inc],[data-edit-task],[data-del-fixed],[data-del-cat]"
   );
   if (!b) return;
-  if (b.dataset.delExp) {
+  if (b.dataset.editExp) {
+    startEditTx("g", b.dataset.editExp);
+  } else if (b.dataset.editInc) {
+    startEditTx("i", b.dataset.editInc);
+  } else if (b.dataset.editTask) {
+    startEditTask(b.dataset.editTask);
+  } else if (b.dataset.delFixed) {
+    state.fixedExpenses = state.fixedExpenses.filter((x) => x.id !== b.dataset.delFixed);
+    save();
+    renderFixedExpenses();
+  } else if (b.dataset.delCat) {
+    const cat = b.dataset.delCat;
+    if (cat === "Otros") return;
+    const inUse = state.expenses.some((x) => x.cat === cat) || state.fixedExpenses.some((x) => x.cat === cat);
+    if (inUse && !confirm(`La categoría "${cat}" tiene gastos. Se reasignarán a "Otros". ¿Continuar?`)) return;
+    if (inUse) {
+      if (!state.categories.includes("Otros")) state.categories.push("Otros");
+      state.expenses.forEach((x) => {
+        if (x.cat === cat) x.cat = "Otros";
+      });
+      state.fixedExpenses.forEach((x) => {
+        if (x.cat === cat) x.cat = "Otros";
+      });
+    }
+    state.categories = state.categories.filter((c) => c !== cat);
+    save();
+    renderCategories();
+    renderCatSelects();
+    renderFinance();
+    renderFixedExpenses();
+    renderMonthlySummary();
+    renderCalendar();
+  } else if (b.dataset.delExp) {
     state.expenses = state.expenses.filter((x) => x.id !== b.dataset.delExp);
     save();
     renderFinance();
@@ -98,8 +131,8 @@ function initValues() {
 }
 function init() {
   renderChrome();
-  renderCatSelect();
   rolloverTasks();
+  rolloverFixedExpenses();
   initValues();
   renderAll();
   pomoRender();

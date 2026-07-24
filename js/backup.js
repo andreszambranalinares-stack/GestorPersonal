@@ -11,6 +11,20 @@ function validateImportedState(parsed) {
 
   const out = defaultState();
 
+  // Categorías: lista de nombres saneados y sin duplicados; si viene vacía/inválida, se usan las por defecto.
+  const seenCat = new Set();
+  const importedCats = arr(parsed.categories)
+    .map((c) => str(c, 40).trim())
+    .filter((c) => {
+      const k = c.toLowerCase();
+      if (!c || seenCat.has(k)) return false;
+      seenCat.add(k);
+      return true;
+    });
+  out.categories = importedCats.length ? importedCats : DEFAULT_CATEGORIES.slice();
+  if (!out.categories.includes("Otros")) out.categories.push("Otros");
+  const catSet = new Set(out.categories);
+
   out.expenses = arr(parsed.expenses)
     .map((e) => {
       const amount = e && num(e.amount);
@@ -18,12 +32,19 @@ function validateImportedState(parsed) {
         skipped++;
         return null;
       }
+      const cat = str(e.cat, 40) || "Otros";
+      // Une al catálogo cualquier categoría usada por un gasto para no dejar huérfanos.
+      if (!catSet.has(cat)) {
+        catSet.add(cat);
+        out.categories.push(cat);
+      }
       return {
         id: str(e.id, 40) || uid(),
         amount,
-        cat: CATS.includes(e.cat) ? e.cat : "Otros",
+        cat,
         note: str(e.note, 140),
         date: e.date,
+        fixedId: typeof e.fixedId === "string" ? str(e.fixedId, 40) : undefined,
       };
     })
     .filter(Boolean);
@@ -89,6 +110,23 @@ function validateImportedState(parsed) {
         repeat: rt.repeat,
         dow,
       };
+    })
+    .filter(Boolean);
+
+  out.fixedExpenses = arr(parsed.fixedExpenses)
+    .map((fe) => {
+      const amount = fe && num(fe.amount);
+      if (!fe || typeof fe !== "object" || amount === null || !(amount > 0)) {
+        skipped++;
+        return null;
+      }
+      const day = Number.isInteger(fe.day) && fe.day >= 1 && fe.day <= 28 ? fe.day : 1;
+      const cat = str(fe.cat, 40) || "Otros";
+      if (!catSet.has(cat)) {
+        catSet.add(cat);
+        out.categories.push(cat);
+      }
+      return { id: str(fe.id, 40) || uid(), amount, cat, note: str(fe.note, 140), day };
     })
     .filter(Boolean);
 
