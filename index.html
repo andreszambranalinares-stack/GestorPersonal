@@ -202,8 +202,52 @@
         </div>
 
         <div class="card">
+          <h2><span class="em">💵</span> Ingresos recurrentes</h2>
+          <div class="mini" style="margin-bottom: 10px">Nómina u otros ingresos que se registran solos cada mes.</div>
+          <form class="row" id="fincomeForm">
+            <input
+              class="grow0"
+              type="number"
+              step="0.01"
+              min="0"
+              inputmode="decimal"
+              id="fincomeAmount"
+              placeholder="Monto"
+              style="flex: 1 1 100px"
+              required
+            />
+            <input
+              class="grow0"
+              type="number"
+              min="1"
+              max="28"
+              step="1"
+              id="fincomeDay"
+              placeholder="Día"
+              style="flex: 1 1 70px"
+              required
+            />
+            <input
+              type="text"
+              id="fincomeNote"
+              maxlength="140"
+              placeholder="Fuente (ej. Nómina)"
+              style="flex: 1 1 100%"
+            />
+            <button class="btn" type="submit" style="flex: 1 1 100%">Añadir ingreso fijo</button>
+          </form>
+          <div id="fincomeList" style="margin-top: 12px"></div>
+        </div>
+
+        <div class="card">
+          <h2><span class="em">🎯</span> Presupuesto por categoría</h2>
+          <div id="catBudgets"></div>
+        </div>
+
+        <div class="card">
           <h2><span class="em">📊</span> Resumen por mes <span class="right" id="msAvg"></span></h2>
           <div class="ms-chart" id="msChart"></div>
+          <div class="mini" id="finInsight" style="margin-top: 12px"></div>
         </div>
 
         <div class="card">
@@ -227,6 +271,7 @@
               style="flex: 1 1 90px"
               required
             />
+            <input type="date" id="goalDeadline" title="Fecha objetivo (opcional)" style="flex: 1 1 140px" />
             <button class="btn grow0" type="submit" style="flex: 0 0 auto">Crear</button>
           </form>
           <div id="goalList" style="margin-top: 8px"></div>
@@ -252,6 +297,7 @@
                 <option value="media" selected>🟡 Media</option>
                 <option value="baja">⚪ Baja</option>
               </select>
+              <input class="grow0" type="date" id="taskDate" title="Fecha (por defecto hoy)" style="flex: 1 1 auto" />
               <select class="grow0" id="taskRepeat" style="flex: 1 1 auto" title="Repetir">
                 <option value="">No repetir</option>
                 <option value="diario">🔁 Diario</option>
@@ -265,6 +311,7 @@
             </div>
           </form>
           <div class="list" id="taskList"></div>
+          <div id="taskUpcoming"></div>
           <div class="routines" id="routinesBox"></div>
         </div>
         <div class="card">

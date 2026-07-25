@@ -5,6 +5,7 @@ function renderAll() {
   renderHome();
   renderFinance();
   renderFixedExpenses();
+  renderFixedIncomes();
   renderMonthlySummary();
   renderGoals();
   renderCalendar();
@@ -15,7 +16,7 @@ function renderAll() {
 // ---------- Delegación de clicks ----------
 document.body.addEventListener("click", (e) => {
   const b = e.target.closest(
-    "[data-del-exp],[data-del-inc],[data-del-task],[data-del-habit],[data-del-routine],[data-del-goal],[data-goal-add],[data-habit],[data-edit-exp],[data-edit-inc],[data-edit-task],[data-del-fixed],[data-del-cat]"
+    "[data-del-exp],[data-del-inc],[data-del-task],[data-del-habit],[data-del-routine],[data-del-goal],[data-goal-add],[data-habit],[data-edit-exp],[data-edit-inc],[data-edit-task],[data-del-fixed],[data-del-fincome],[data-del-cat]"
   );
   if (!b) return;
   if (b.dataset.editExp) {
@@ -28,6 +29,10 @@ document.body.addEventListener("click", (e) => {
     state.fixedExpenses = state.fixedExpenses.filter((x) => x.id !== b.dataset.delFixed);
     save();
     renderFixedExpenses();
+  } else if (b.dataset.delFincome) {
+    state.fixedIncomes = state.fixedIncomes.filter((x) => x.id !== b.dataset.delFincome);
+    save();
+    renderFixedIncomes();
   } else if (b.dataset.delCat) {
     const cat = b.dataset.delCat;
     if (cat === "Otros") return;
@@ -126,18 +131,34 @@ if (location.protocol.startsWith("http")) {
 // ---------- Init ----------
 function initValues() {
   $("finMonth").value = curMonth();
+  $("taskDate").value = todayStr;
   renderConfig();
   renderFocus();
+}
+// Atajos de la PWA: ?go=<vista>&add=1 abre esa vista y enfoca el input de alta.
+function applyUrlShortcut() {
+  const params = new URLSearchParams(location.search);
+  const go = params.get("go");
+  if (!go || !VIEWS.includes(go)) return;
+  switchView(go);
+  if (params.get("add") === "1") {
+    if (go === "finanzas") $("finAmount").focus();
+    else if (go === "tareas") $("taskText").focus();
+    else if (go === "habitos") $("habitName").focus();
+  }
 }
 function init() {
   renderChrome();
   rolloverTasks();
   rolloverFixedExpenses();
+  rolloverFixedIncomes();
   initValues();
   renderAll();
   pomoRender();
   switchView("home");
+  applyUrlShortcut();
   loadWeather();
+  checkTaskReminders();
   if (stateLoadError) {
     toast("No se pudieron leer tus datos guardados (archivo dañado). Se inició un panel nuevo.", {
       type: "err",

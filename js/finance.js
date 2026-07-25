@@ -80,6 +80,37 @@ function renderFinance() {
         .join("")
     : `<div class="empty">${filtering ? "Ningún movimiento coincide con el filtro." : "Agrega tu primer movimiento 👇"}</div>`;
   renderBalance(m);
+  renderCategoryBudgets(m);
+}
+
+// Presupuesto por categoría: una barra por cada categoría con límite fijado (mes seleccionado).
+function renderCategoryBudgets(m) {
+  const box = $("catBudgets");
+  if (!box) return;
+  m = m || selectedMonth();
+  const budgets = state.config.categoryBudgets || {};
+  const names = Object.keys(budgets).filter((n) => budgets[n] > 0);
+  if (!names.length) {
+    box.innerHTML = `<div class="empty">Fija un límite por categoría en ⚙️ Ajustes → Categorías.</div>`;
+    return;
+  }
+  const spentBy = {};
+  state.expenses
+    .filter((e) => e.date.startsWith(m))
+    .forEach((e) => (spentBy[e.cat] = (spentBy[e.cat] || 0) + e.amount));
+  box.innerHTML = names
+    .sort()
+    .map((name) => {
+      const budget = budgets[name];
+      const spent = spentBy[name] || 0;
+      const pct = (spent / budget) * 100;
+      const cls = pct >= 100 ? "over" : pct >= 80 ? "warn" : "";
+      return `<div style="margin-bottom:12px;">
+        <div class="budget-head"><span><span class="cat-dot" style="background:${catColor(name)};display:inline-block;vertical-align:middle;margin-right:6px;"></span>${esc(name)}</span><span>${moneyShort(spent)} / ${moneyShort(budget)}</span></div>
+        <div class="progress ${cls}"><span style="width:${Math.min(pct, 100)}%"></span></div>
+      </div>`;
+    })
+    .join("");
 }
 
 function renderBalance(m) {
@@ -105,12 +136,29 @@ function renderBalance(m) {
   }
 }
 
+// Meses (redondeados hacia arriba, mínimo 1) entre hoy y una fecha "YYYY-MM-DD" futura.
+function monthsUntil(dateStr) {
+  const days = Math.max(1, Math.round((new Date(dateStr) - new Date(todayStr)) / 86400000));
+  return Math.max(1, Math.ceil(days / 30.44));
+}
 function renderGoals() {
   $("goalList").innerHTML = state.goals.length
     ? state.goals
         .map((g) => {
           const pct = g.target > 0 ? Math.min((g.saved / g.target) * 100, 100) : 0;
           const done = g.saved >= g.target;
+          let deadlineMsg = "";
+          if (g.deadline) {
+            const dl = `${g.deadline.slice(8, 10)}/${g.deadline.slice(5, 7)}/${g.deadline.slice(0, 4)}`;
+            if (done) {
+              deadlineMsg = `<div class="mini">🎯 Meta cumplida (fecha objetivo ${dl}).</div>`;
+            } else if (g.deadline < todayStr) {
+              deadlineMsg = `<div class="mini" style="color:var(--danger);">⏰ Fecha objetivo ${dl} vencida. Faltan ${moneyShort(g.target - g.saved)}.</div>`;
+            } else {
+              const perMonth = (g.target - g.saved) / monthsUntil(g.deadline);
+              deadlineMsg = `<div class="mini">📅 Para llegar el ${dl}: ahorra ~${moneyShort(perMonth)}/mes.</div>`;
+            }
+          }
           return `<div class="goal">
           <div class="goal-head">
             <span class="goal-name">${done ? "🎉 " : ""}${esc(g.name)}</span>
@@ -118,6 +166,7 @@ function renderGoals() {
             <button class="icon-btn" data-del-goal="${g.id}" title="Eliminar">✕</button>
           </div>
           <div class="progress"><span style="width:${pct}%;${done ? "background:var(--good)" : ""}"></span></div>
+          ${deadlineMsg}
           <div class="goal-ctrls"><button class="ghost" data-goal-add="${g.id}">＋ Abonar</button></div>
         </div>`;
         })
@@ -190,11 +239,45 @@ function renderMonthlySummary() {
     .join("");
   const avg = totals.reduce((a, b) => a + b, 0) / totals.length;
   $("msAvg").textContent = `Promedio: ${money(avg)}`;
+  renderInsights(totals, months);
+}
+
+// Frase comparativa: gasto de este mes vs. el anterior.
+function renderInsights(totals, months) {
+  const box = $("finInsight");
+  if (!box) return;
+  const cur = totals[totals.length - 1];
+  const prev = totals[totals.length - 2];
+  const prevLbl = new Date(
+    Number(months[months.length - 2].slice(0, 4)),
+    Number(months[months.length - 2].slice(5, 7)) - 1,
+    1
+  )
+    .toLocaleDateString("es", { month: "long" })
+    .replace(".", "");
+  if (prev <= 0 && cur <= 0) {
+    box.textContent = "";
+    return;
+  }
+  if (prev <= 0) {
+    box.innerHTML = `📊 Este mes llevas <b>${moneyShort(cur)}</b> en gastos (no hay datos del mes anterior para comparar).`;
+    return;
+  }
+  const diff = cur - prev;
+  const pct = Math.round((Math.abs(diff) / prev) * 100);
+  if (diff === 0) {
+    box.innerHTML = `📊 Llevas lo mismo que en ${prevLbl} (${moneyShort(cur)}).`;
+  } else if (diff > 0) {
+    box.innerHTML = `📈 Llevas <b>${pct}% más</b> que en ${prevLbl} (${moneyShort(cur)} vs ${moneyShort(prev)}).`;
+  } else {
+    box.innerHTML = `📉 Llevas <b>${pct}% menos</b> que en ${prevLbl} (${moneyShort(cur)} vs ${moneyShort(prev)}). ¡Bien! 🎉`;
+  }
 }
 
 // ---------- Eventos: finanzas ----------
 let txType = "gasto";
 let editingTx = null; // {kind, id} cuando se está editando un movimiento
+let justAddedId = null; // id de la última fila creada, para el resalte transitorio
 function setTxType(type) {
   txType = type;
   document.querySelectorAll("#txType .seg-btn").forEach((x) => x.classList.toggle("active", x.dataset.type === type));
@@ -247,17 +330,23 @@ $("finForm").addEventListener("submit", (e) => {
     }
     cancelEditTx();
   } else {
-    if (txType === "ingreso") state.incomes.push({ id: uid(), amount, note, date: todayStr });
-    else state.expenses.push({ id: uid(), amount, cat: $("finCat").value, note, date: todayStr });
+    const nid = uid();
+    if (txType === "ingreso") state.incomes.push({ id: nid, amount, note, date: todayStr });
+    else state.expenses.push({ id: nid, amount, cat: $("finCat").value, note, date: todayStr });
     $("finAmount").value = "";
     $("finNote").value = "";
     $("finMonth").value = curMonth();
+    justAddedId = nid;
   }
   save();
   renderFinance();
   renderMonthlySummary();
   renderHome();
   renderCalendar();
+  if (justAddedId) {
+    flashNew(justAddedId);
+    justAddedId = null;
+  }
 });
 $("finCancel").addEventListener("click", cancelEditTx);
 $("finMonth").addEventListener("change", renderFinance);
@@ -337,15 +426,64 @@ $("fixedForm").addEventListener("submit", (e) => {
   renderCalendar();
 });
 
+// ---------- Ingresos recurrentes (espejo de los gastos fijos) ----------
+function rolloverFixedIncomes() {
+  let changed = false;
+  const today = new Date().getDate();
+  const m = curMonth();
+  state.fixedIncomes.forEach((fi) => {
+    if (today < fi.day) return;
+    const already = state.incomes.some((e) => e.fixedId === fi.id && e.date.startsWith(m));
+    if (already) return;
+    state.incomes.push({ id: uid(), amount: fi.amount, note: fi.note, date: `${m}-${pad(fi.day)}`, fixedId: fi.id });
+    changed = true;
+  });
+  if (changed) save();
+}
+function renderFixedIncomes() {
+  const box = $("fincomeList");
+  if (!box) return;
+  box.innerHTML = state.fixedIncomes.length
+    ? state.fixedIncomes
+        .map(
+          (fi) =>
+            `<div class="rt"><span class="cat-dot" style="background:var(--good)"></span>
+        <span style="flex:1 1 auto;">${esc(fi.note) || "Ingreso"}</span>
+        <span class="rt-rep">día ${fi.day} · +${money(fi.amount)}</span>
+        <button class="icon-btn" data-del-fincome="${fi.id}" title="Eliminar ingreso fijo">✕</button></div>`
+        )
+        .join("")
+    : `<div class="empty">Sin ingresos fijos. Añade tu nómina u otros ingresos periódicos 👇</div>`;
+}
+$("fincomeForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const amount = parseFloat($("fincomeAmount").value);
+  let day = parseInt($("fincomeDay").value, 10);
+  if (!(amount > 0)) return;
+  if (!(day >= 1 && day <= 28)) day = 1;
+  state.fixedIncomes.push({ id: uid(), amount, note: $("fincomeNote").value.trim(), day });
+  $("fincomeAmount").value = "";
+  $("fincomeNote").value = "";
+  $("fincomeDay").value = "";
+  save();
+  rolloverFixedIncomes();
+  renderFixedIncomes();
+  renderFinance();
+  renderHome();
+  renderCalendar();
+});
+
 // Metas de ahorro
 $("goalForm").addEventListener("submit", (e) => {
   e.preventDefault();
   const name = $("goalName").value.trim();
   const target = parseFloat($("goalTarget").value);
   if (!name || !(target > 0)) return;
-  state.goals.push({ id: uid(), name, target, saved: 0 });
+  const deadline = $("goalDeadline").value || undefined;
+  state.goals.push({ id: uid(), name, target, saved: 0, deadline });
   $("goalName").value = "";
   $("goalTarget").value = "";
+  $("goalDeadline").value = "";
   save();
   renderGoals();
 });

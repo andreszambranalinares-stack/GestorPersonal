@@ -20,15 +20,29 @@ function renderConfig() {
 function renderCategories() {
   const box = $("categoryList");
   if (!box) return;
+  const budgets = state.config.categoryBudgets || {};
   box.innerHTML = state.categories
     .map(
       (c, i) =>
         `<div class="rt"><span class="cat-dot" style="background:${CAT_COLOR(i)}"></span>
       <span style="flex:1 1 auto;">${esc(c)}</span>
+      <input type="number" min="0" step="1" inputmode="decimal" class="cat-budget-input" data-catbudget="${esc(c)}" value="${budgets[c] || ""}" placeholder="límite/mes" title="Presupuesto mensual (vacío = sin límite)" />
       ${c === "Otros" ? `<span class="rt-rep" title="Categoría de reserva">fija</span>` : `<button class="icon-btn" data-del-cat="${esc(c)}" title="Eliminar categoría">✕</button>`}</div>`
     )
     .join("");
 }
+// Guardar presupuesto por categoría al escribir en su input.
+$("categoryList").addEventListener("input", (e) => {
+  const inp = e.target.closest("[data-catbudget]");
+  if (!inp) return;
+  const name = inp.dataset.catbudget;
+  const v = parseFloat(inp.value);
+  if (!state.config.categoryBudgets) state.config.categoryBudgets = {};
+  if (v > 0) state.config.categoryBudgets[name] = v;
+  else delete state.config.categoryBudgets[name];
+  save();
+  renderCategoryBudgets();
+});
 $("categoryForm").addEventListener("submit", (e) => {
   e.preventDefault();
   const name = $("categoryName").value.trim();

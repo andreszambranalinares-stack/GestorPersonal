@@ -7,17 +7,28 @@ navegador (`localStorage`), no hay servidor ni cuentas.
 ## ✨ Funciones
 
 - **💰 Finanzas Pro** — gastos e ingresos, saldo neto del mes, gráfico por categoría,
-  resumen de los últimos 6 meses, **presupuesto mensual con alerta** y **metas de ahorro**.
-  Incluye **categorías personalizables**, **gastos fijos recurrentes** (alquiler,
+  resumen de los últimos 6 meses, **presupuesto mensual con alerta** y **presupuesto por
+  categoría**, **metas de ahorro con fecha límite** (te dice cuánto ahorrar/mes) e
+  **insights** ("gastaste X% más/menos que el mes pasado"). Incluye **categorías
+  personalizables**, **gastos fijos** e **ingresos recurrentes** (alquiler, nómina,
   suscripciones…) que se registran solos cada mes, **edición** de movimientos y un
   **buscador/filtro** por nota, categoría y tipo.
-- **✅ Tareas** — prioridades, tareas que se arrastran al día siguiente, **tareas recurrentes**,
-  **edición** de tareas y **temporizador Pomodoro** con aviso.
+- **✅ Tareas** — prioridades, **agenda** (agendar a fechas futuras), tareas que se arrastran
+  al día siguiente, **recordatorio** de las tareas de hoy al abrir la app, **tareas
+  recurrentes**, **edición** de tareas y **temporizador Pomodoro** con aviso.
 - **🔥 Hábitos** — seguimiento diario con **racha** y vista de la semana.
 - **📅 Calendario** — toca un día para ver gastos, tareas, hábitos y el **clima** de esa fecha.
 - **🌤️ Clima en vivo** vía [Open-Meteo](https://open-meteo.com) (sin API key).
-- **📱 App instalable** (PWA) que funciona **offline**.
+- **📱 App instalable** (PWA) que funciona **offline**, con **atajos** de instalación y
+  pantalla de inicio ("Añadir gasto", "Nueva tarea").
 - **💾 Respaldo** — exportar/importar en JSON y exportar gastos a CSV.
+
+## 📸 Capturas
+
+<p>
+  <img src="screenshots/home.png" alt="Inicio" width="240" />
+  <img src="screenshots/finanzas.png" alt="Finanzas" width="240" />
+</p>
 
 ## 🚀 Uso
 

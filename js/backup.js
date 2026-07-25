@@ -56,7 +56,13 @@ function validateImportedState(parsed) {
         skipped++;
         return null;
       }
-      return { id: str(e.id, 40) || uid(), amount, note: str(e.note, 140), date: e.date };
+      return {
+        id: str(e.id, 40) || uid(),
+        amount,
+        note: str(e.note, 140),
+        date: e.date,
+        fixedId: typeof e.fixedId === "string" ? str(e.fixedId, 40) : undefined,
+      };
     })
     .filter(Boolean);
 
@@ -73,6 +79,7 @@ function validateImportedState(parsed) {
         name: str(g.name, 60),
         target,
         saved: saved !== null && saved >= 0 ? saved : 0,
+        deadline: isDate(g.deadline) ? g.deadline : undefined,
       };
     })
     .filter(Boolean);
@@ -130,6 +137,18 @@ function validateImportedState(parsed) {
     })
     .filter(Boolean);
 
+  out.fixedIncomes = arr(parsed.fixedIncomes)
+    .map((fi) => {
+      const amount = fi && num(fi.amount);
+      if (!fi || typeof fi !== "object" || amount === null || !(amount > 0)) {
+        skipped++;
+        return null;
+      }
+      const day = Number.isInteger(fi.day) && fi.day >= 1 && fi.day <= 28 ? fi.day : 1;
+      return { id: str(fi.id, 40) || uid(), amount, note: str(fi.note, 140), day };
+    })
+    .filter(Boolean);
+
   out.habits = arr(parsed.habits)
     .map((h) => {
       if (!h || typeof h !== "object" || !h.name) {
@@ -175,6 +194,21 @@ function validateImportedState(parsed) {
     out.config.geoCity = str(c.geoCity, 80);
     out.config.geoName = str(c.geoName, 80);
     out.config.lastBackupAt = isDate(c.lastBackupAt) ? c.lastBackupAt : null;
+    // Presupuestos por categoría: solo montos > 0; se une al catálogo la categoría referenciada.
+    out.config.categoryBudgets = {};
+    if (c.categoryBudgets && typeof c.categoryBudgets === "object" && !Array.isArray(c.categoryBudgets)) {
+      Object.keys(c.categoryBudgets).forEach((k) => {
+        const name = str(k, 40);
+        const v = num(c.categoryBudgets[k]);
+        if (name && v !== null && v > 0) {
+          out.config.categoryBudgets[name] = v;
+          if (!catSet.has(name)) {
+            catSet.add(name);
+            out.categories.push(name);
+          }
+        }
+      });
+    }
   }
 
   return { state: out, skipped };

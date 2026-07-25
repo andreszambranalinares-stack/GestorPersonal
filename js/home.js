@@ -12,7 +12,7 @@ function renderHome() {
   $("stHab").textContent = `${habDone}/${state.habits.length}`;
 
   const tt = state.tasks
-    .filter((t) => t.date === todayStr || !t.done)
+    .filter((t) => t.date === todayStr)
     .sort((a, b) => a.done - b.done || { alta: 0, media: 1, baja: 2 }[a.prio] - { alta: 0, media: 1, baja: 2 }[b.prio]);
   $("homeTaskCount").textContent = pend ? `${pend} pendiente${pend > 1 ? "s" : ""}` : "todo hecho ✨";
   $("homeTasks").innerHTML = tt.length

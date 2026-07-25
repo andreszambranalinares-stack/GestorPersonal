@@ -19,3 +19,11 @@ function moneyShort(n) {
 function esc(s) {
   return String(s || "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 }
+// Resalte transitorio de la fila recién creada (por id de movimiento o tarea).
+function flashNew(id) {
+  const el = document.querySelector(`[data-del-exp="${id}"],[data-del-inc="${id}"],[data-task="${id}"]`);
+  const row = el && el.closest(".item, .task");
+  if (!row) return;
+  row.classList.add("just-added");
+  setTimeout(() => row.classList.remove("just-added"), 1000);
+}
