@@ -32,28 +32,46 @@ function rolloverTasks() {
   });
   if (changed) save();
 }
-function renderTasks() {
-  const list = state.tasks
-    .filter((t) => t.date === todayStr || !t.done)
-    .sort((a, b) => a.done - b.done || { alta: 0, media: 1, baja: 2 }[a.prio] - { alta: 0, media: 1, baja: 2 }[b.prio]);
-  const pending = state.tasks.filter((t) => !t.done).length;
-  $("taskCount").textContent = pending ? `${pending} pendiente${pending > 1 ? "s" : ""}` : "todo hecho ✨";
-  $("taskList").innerHTML = list.length
-    ? list
-        .map(
-          (t) => `<div class="task ${t.done ? "done" : ""}">
+const PRIO_ORDER = { alta: 0, media: 1, baja: 2 };
+function taskRowHtml(t, showDate) {
+  const dateBadge = showDate
+    ? `<span class="carried" title="Agendada">📅 ${t.date.slice(8, 10)}/${t.date.slice(5, 7)}</span>`
+    : "";
+  return `<div class="task ${t.done ? "done" : ""}">
         <input type="checkbox" data-task="${t.id}" ${t.done ? "checked" : ""}>
         <span class="txt">${esc(t.text)}</span>
         ${t.routineId ? `<span class="recur" title="Recurrente">🔁</span>` : ""}
-        ${!t.routineId && t.created && t.created < todayStr ? `<span class="carried" title="Arrastrada desde ${t.created.slice(8, 10)}/${t.created.slice(5, 7)}">↪</span>` : ""}
+        ${!t.routineId && !showDate && t.created && t.created < todayStr ? `<span class="carried" title="Arrastrada desde ${t.created.slice(8, 10)}/${t.created.slice(5, 7)}">↪</span>` : ""}
+        ${dateBadge}
         <span class="pill ${esc(t.prio)}">${esc(t.prio)}</span>
         <button class="icon-btn" data-edit-task="${t.id}" title="Editar">✏️</button>
         <button class="icon-btn" data-del-task="${t.id}" title="Eliminar">✕</button>
-      </div>`
-        )
-        .join("")
-    : `<div class="empty">Sin tareas. ¡Agrega una! 👆</div>`;
+      </div>`;
+}
+function renderTasks() {
+  const today = state.tasks
+    .filter((t) => t.date === todayStr)
+    .sort((a, b) => a.done - b.done || PRIO_ORDER[a.prio] - PRIO_ORDER[b.prio]);
+  const upcoming = state.tasks
+    .filter((t) => t.date > todayStr && !t.done)
+    .sort((a, b) => a.date.localeCompare(b.date) || PRIO_ORDER[a.prio] - PRIO_ORDER[b.prio]);
+  const pending = state.tasks.filter((t) => !t.done).length;
+  $("taskCount").textContent = pending ? `${pending} pendiente${pending > 1 ? "s" : ""}` : "todo hecho ✨";
+  $("taskList").innerHTML = today.length
+    ? today.map((t) => taskRowHtml(t, false)).join("")
+    : `<div class="empty">Sin tareas para hoy. ¡Agrega una! 👆</div>`;
+  $("taskUpcoming").innerHTML = upcoming.length
+    ? `<div class="section-title">📅 Próximas</div>` + upcoming.map((t) => taskRowHtml(t, true)).join("")
+    : "";
   renderRoutines();
+}
+// Aviso (al abrir la app) de las tareas de hoy sin hacer. Sin backend no hay push en segundo plano.
+function checkTaskReminders() {
+  const due = state.tasks.filter((t) => t.date === todayStr && !t.done).length;
+  if (!due) return;
+  const msg = `Tienes ${due} tarea${due > 1 ? "s" : ""} pendiente${due > 1 ? "s" : ""} para hoy.`;
+  toast(msg, { type: "info", duration: 6000 });
+  notify(msg);
 }
 const REPEAT_LBL = { diario: "Diario", laborables: "Laborables", semanal: "Semanal" };
 const REPEATS = Object.keys(REPEAT_LBL);
@@ -83,6 +101,7 @@ function startEditTask(id) {
   editingTask = id;
   $("taskText").value = t.text;
   $("taskPrio").value = t.prio;
+  $("taskDate").value = t.date; // permite reprogramar la tarea
   $("taskRepeat").value = "";
   $("taskRepeat").style.display = "none"; // la repetición no aplica al editar una tarea existente
   $("taskSubmit").textContent = "Guardar";
@@ -92,6 +111,7 @@ function startEditTask(id) {
 function cancelEditTask() {
   editingTask = null;
   $("taskText").value = "";
+  $("taskDate").value = todayStr;
   $("taskRepeat").style.display = "";
   $("taskSubmit").textContent = "Añadir";
   $("taskCancel").style.display = "none";
@@ -101,11 +121,13 @@ $("taskForm").addEventListener("submit", (e) => {
   const text = $("taskText").value.trim();
   if (!text) return;
   const prio = $("taskPrio").value;
+  const date = /^\d{4}-\d{2}-\d{2}$/.test($("taskDate").value) ? $("taskDate").value : todayStr;
   if (editingTask) {
     const t = state.tasks.find((x) => x.id === editingTask);
     if (t) {
       t.text = text;
       t.prio = prio;
+      t.date = date;
     }
     cancelEditTask();
   } else {
@@ -115,9 +137,16 @@ $("taskForm").addEventListener("submit", (e) => {
       routineId = uid();
       state.routines.push({ id: routineId, text, prio, repeat, dow: new Date().getDay() });
     }
-    state.tasks.push({ id: uid(), text, prio, done: false, date: todayStr, created: todayStr, routineId });
+    const nid = uid();
+    state.tasks.push({ id: nid, text, prio, done: false, date, created: todayStr, routineId });
     $("taskText").value = "";
     $("taskRepeat").value = "";
+    $("taskDate").value = todayStr;
+    save();
+    renderTasks();
+    renderHome();
+    flashNew(nid);
+    return;
   }
   save();
   renderTasks();

@@ -20,11 +20,12 @@ function catColor(name) {
 
 const defaultState = () => ({
   expenses: [], // {id, amount, cat, note, date, fixedId?}
-  incomes: [], // {id, amount, note, date}
-  goals: [], // {id, name, target, saved}
+  incomes: [], // {id, amount, note, date, fixedId?}
+  goals: [], // {id, name, target, saved, deadline?}
   tasks: [], // {id, text, prio, done, date, created, routineId?}
   routines: [], // {id, text, prio, repeat, dow}
   fixedExpenses: [], // {id, amount, cat, note, day}
+  fixedIncomes: [], // {id, amount, note, day}
   categories: DEFAULT_CATEGORIES.slice(), // nombres de categorías de gasto (editables)
   habits: [], // {id, name, log:{ "YYYY-MM-DD": true }}
   focus: { date: "", text: "" },
@@ -34,6 +35,7 @@ const defaultState = () => ({
     currency: "$",
     theme: "auto",
     budget: 0,
+    categoryBudgets: {}, // { "Comida": 200, ... } presupuesto mensual por categoría (0 = sin límite)
     lat: null,
     lon: null,
     geoCity: "",
@@ -48,7 +50,15 @@ function load() {
   const raw = localStorage.getItem(KEY);
   if (!raw) return defaultState();
   try {
-    return Object.assign(defaultState(), JSON.parse(raw));
+    const base = defaultState();
+    const parsed = JSON.parse(raw);
+    const merged = Object.assign(base, parsed);
+    // config es un objeto anidado: se fusiona aparte para no perder claves nuevas
+    // (p. ej. categoryBudgets) al cargar estados guardados por versiones anteriores.
+    merged.config = Object.assign(base.config, parsed && parsed.config);
+    if (!merged.config.categoryBudgets || typeof merged.config.categoryBudgets !== "object")
+      merged.config.categoryBudgets = {};
+    return merged;
   } catch {
     stateLoadError = true;
     return defaultState();
