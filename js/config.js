@@ -14,6 +14,7 @@ function renderConfig() {
   applyTheme();
   renderCatSelects();
   renderCategories();
+  renderCloud();
 }
 
 // ---------- Categorías personalizadas ----------

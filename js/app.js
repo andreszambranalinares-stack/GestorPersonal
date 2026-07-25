@@ -157,6 +157,7 @@ function init() {
   pomoRender();
   switchView("home");
   applyUrlShortcut();
+  handleAuthRedirect();
   loadWeather();
   checkTaskReminders();
   if (stateLoadError) {
