@@ -10,5 +10,5 @@
 // y la sección "Copia en la nube" ni siquiera aparece.
 //
 // Guía paso a paso para crear el proyecto: docs/CLOUD_SETUP.md
-const SUPABASE_URL = ""; // p. ej. "https://abcdxyz.supabase.co"
+const SUPABASE_URL = "https://kgogsovxjgfiiohziwnl.supabase.co"; // p. ej. "https://abcdxyz.supabase.co"
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtnb2dzb3Z4amdmaWlvaHppd25sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwNjkxNjksImV4cCI6MjEwMDY0NTE2OX0.hyQz4ci6drcrFE4Gv5iTk-rqGQKbro5XtcvqUqe2w7M"; // la clave "anon public" del proyecto
