@@ -1,5 +1,5 @@
 // Service worker de Panel Personal — cachea el app-shell para uso offline.
-const CACHE = "panel-v3";
+const CACHE = "panel-v4";
 const SHELL = [
   "./",
   "./index.html",
@@ -9,6 +9,7 @@ const SHELL = [
   "./icons/icon-512.png",
   "./icons/icon-512-maskable.png",
   "./css/style.css",
+  "./js/supabase-config.js",
   "./js/state.js",
   "./js/utils.js",
   "./js/toast.js",
@@ -21,6 +22,7 @@ const SHELL = [
   "./js/calendar.js",
   "./js/config.js",
   "./js/backup.js",
+  "./js/cloud.js",
   "./js/pomodoro.js",
   "./js/app.js",
 ];
@@ -48,8 +50,8 @@ self.addEventListener("fetch", (e) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
 
-  // El clima siempre va a la red (nunca se cachea); si no hay red, que falle y la app usa su fallback.
-  if (url.hostname.endsWith("open-meteo.com")) return;
+  // El clima y la nube (Supabase) siempre van a la red; nunca se cachean.
+  if (url.hostname.endsWith("open-meteo.com") || url.hostname.endsWith("supabase.co")) return;
 
   // App-shell: primero caché, luego red (y guarda copia de lo mismo-origen).
   e.respondWith(

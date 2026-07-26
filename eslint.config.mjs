@@ -17,8 +17,15 @@ export default [
       sourceType: "script",
       globals: {
         ...globals.browser,
+        // config de la copia en la nube (js/supabase-config.js)
+        SUPABASE_URL: "readonly",
+        SUPABASE_ANON_KEY: "readonly",
         // compartidos entre archivos (solo lectura)
         $: "readonly",
+        cloudConfigured: "readonly",
+        renderCloud: "readonly",
+        handleAuthRedirect: "readonly",
+        validateImportedState: "readonly",
         DEFAULT_CATEGORIES: "readonly",
         CAT_COLOR: "readonly",
         catColor: "readonly",
