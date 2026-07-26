@@ -33,7 +33,6 @@ export default [
         REPEATS: "readonly",
         THEMES: "readonly",
         WCODE: "readonly",
-        closeDrawer: "readonly",
         curMonth: "readonly",
         defaultState: "readonly",
         esc: "readonly",

@@ -93,8 +93,5 @@ $("modal").addEventListener("click", (e) => {
   if (e.target.id === "modal") closeModal();
 });
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") {
-    closeModal();
-    closeDrawer();
-  }
+  if (e.key === "Escape") closeModal();
 });
