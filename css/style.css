@@ -176,100 +176,32 @@ body {
 .bar-weather span.i {
   font-size: 1.05rem;
 }
-
-/* ---------- Drawer ---------- */
-.scrim {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s;
-  z-index: 45;
+.bar-weather:active {
+  transform: scale(0.96);
 }
-.scrim.show {
-  opacity: 1;
-  pointer-events: auto;
-}
-.drawer {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 280px;
-  max-width: 82vw;
-  z-index: 46;
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  transform: translateX(-102%);
-  transition: transform 0.24s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: calc(var(--safe-t) + 18px) 14px 18px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 8px 0 40px rgba(0, 0, 0, 0.18);
-}
-.drawer.open {
-  transform: translateX(0);
-}
-.drawer-brand {
+.brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 4px 8px 16px;
+  gap: 8px;
+  padding-left: 6px;
+  flex: 0 0 auto;
 }
-.drawer-brand .logo {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+.brand-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   background: linear-gradient(135deg, var(--s1), var(--s3));
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.3rem;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 30%, transparent);
 }
-.drawer-brand .bn {
+.brand-name {
   font-weight: 700;
   font-size: 1.05rem;
-}
-.drawer-brand .bd {
-  font-size: 0.76rem;
-  color: var(--muted);
-  text-transform: capitalize;
-}
-.navlink {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  width: 100%;
-  text-align: left;
-  background: transparent;
-  border: none;
-  color: var(--text);
-  cursor: pointer;
-  padding: 12px 12px;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 500;
-}
-.navlink .ni {
-  font-size: 1.25rem;
-  width: 24px;
-  text-align: center;
-}
-.navlink:active {
-  background: var(--surface-2);
-}
-.navlink.active {
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  color: var(--accent);
-  font-weight: 650;
-}
-.drawer-foot {
-  margin-top: auto;
-  font-size: 0.72rem;
-  color: var(--muted);
-  text-align: center;
-  padding-top: 14px;
+  letter-spacing: -0.01em;
+  display: none;
 }
 
 /* ---------- Bottom nav ---------- */
@@ -303,27 +235,42 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
   padding: 6px 0;
+  transition: color 0.15s;
 }
 .navbtn .ni {
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   line-height: 1;
-  filter: grayscale(0.4);
-  opacity: 0.7;
-  transition: transform 0.12s;
+  padding: 3px 16px;
+  border-radius: 999px;
+  opacity: 0.75;
+  transition:
+    background 0.18s ease,
+    transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.15s;
 }
 .navbtn .nl {
   font-size: 0.64rem;
   font-weight: 600;
+  letter-spacing: 0.01em;
 }
 .navbtn.active {
   color: var(--accent);
 }
 .navbtn.active .ni {
-  filter: none;
   opacity: 1;
-  transform: translateY(-1px) scale(1.08);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  transform: translateY(-1px);
+}
+.navbtn:not(.active):active .ni {
+  transform: scale(0.9);
+}
+/* La marca y el ítem de Ajustes solo se muestran en el sidebar (escritorio).
+   Va tras la regla .navbtn para ganar en orden (misma especificidad). */
+.nav-brand,
+.navbtn.navbtn--settings {
+  display: none;
 }
 
 /* ---------- FAB ---------- */
@@ -1414,10 +1361,143 @@ button.icon-btn:active {
 }
 /* Estados vacíos un poco más cuidados */
 .empty {
-  opacity: 0.9;
+  opacity: 0.85;
+  text-align: center;
+  color: var(--text-2);
+  padding: 8px 4px;
 }
+
+/* ---------- Refinamientos con puntero (escritorio) ---------- */
+@media (hover: hover) and (pointer: fine) {
+  .card {
+    transition:
+      box-shadow 0.2s ease,
+      border-color 0.2s ease;
+  }
+  .iconbtn:hover,
+  .bar-weather:hover {
+    background: var(--surface-2);
+  }
+  .navbtn:hover:not(.active) {
+    color: var(--text);
+  }
+  .fab:hover {
+    filter: brightness(1.05);
+  }
+}
+
+/* ---------- Escritorio: barra lateral en vez de barra inferior ---------- */
+@media (min-width: 900px) {
+  :root {
+    --side-w: 236px;
+  }
+  body {
+    padding-left: var(--side-w);
+    padding-bottom: 28px;
+  }
+  .appbar {
+    left: var(--side-w);
+  }
+  .appbar .brand {
+    display: none;
+  }
+  .botnav {
+    top: 0;
+    bottom: 0;
+    right: auto;
+    width: var(--side-w);
+    height: 100vh;
+    display: block;
+    padding: calc(var(--safe-t) + 12px) 12px calc(var(--safe-b) + 14px);
+    border-top: none;
+    border-right: 1px solid var(--border);
+  }
+  .botnav-inner {
+    max-width: none;
+    flex-direction: column;
+    gap: 3px;
+    height: 100%;
+  }
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 4px 10px 16px;
+  }
+  .nav-brand-logo {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    background: linear-gradient(135deg, var(--s1), var(--s3));
+    box-shadow: 0 2px 10px color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+  .nav-brand-name {
+    font-weight: 700;
+    font-size: 0.98rem;
+    letter-spacing: -0.01em;
+  }
+  .nav-brand-date {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: capitalize;
+  }
+  .navbtn {
+    flex: 0 0 auto;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 13px;
+    padding: 11px 12px;
+    border-radius: 12px;
+    color: var(--text-2);
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+  }
+  .navbtn .ni {
+    font-size: 1.2rem;
+    padding: 0;
+    width: 24px;
+    text-align: center;
+    background: none;
+    transform: none;
+  }
+  .navbtn .nl {
+    font-size: 0.95rem;
+    font-weight: 550;
+  }
+  .navbtn.active {
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    color: var(--accent);
+  }
+  .navbtn.active .ni {
+    background: none;
+    transform: none;
+  }
+  .navbtn:hover:not(.active) {
+    background: var(--surface-2);
+  }
+  .navbtn.navbtn--settings {
+    display: flex;
+    margin-top: auto;
+  }
+  .fab {
+    right: max(28px, env(safe-area-inset-right));
+    bottom: 28px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .just-added {
+    animation: none;
+  }
+  .navbtn .ni,
+  .navbtn,
+  .view.active {
+    transition: none;
     animation: none;
   }
 }

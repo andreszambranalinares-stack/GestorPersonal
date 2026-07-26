@@ -17,7 +17,7 @@
     <!-- ===== App bar ===== -->
     <div class="appbar">
       <div class="appbar-inner">
-        <button class="iconbtn" id="hamburger" aria-label="Menú">☰</button>
+        <div class="brand"><span class="brand-logo">📊</span><span class="brand-name">Panel</span></div>
         <div class="bar-title" id="barTitle">Inicio</div>
         <button class="bar-weather" id="barWeather" aria-label="Ver clima">
           <span class="i" id="barIcon">🌡️</span><span id="barTemp">--°</span>
@@ -25,25 +25,6 @@
         <button class="iconbtn" id="gear" aria-label="Ajustes">⚙️</button>
       </div>
     </div>
-
-    <!-- ===== Drawer ===== -->
-    <div class="scrim" id="scrim"></div>
-    <nav class="drawer" id="drawer">
-      <div class="drawer-brand">
-        <div class="logo">📊</div>
-        <div>
-          <div class="bn">Panel Personal</div>
-          <div class="bd" id="drawerDate"></div>
-        </div>
-      </div>
-      <button class="navlink" data-nav="home"><span class="ni">🏠</span> Inicio</button>
-      <button class="navlink" data-nav="finanzas"><span class="ni">💰</span> Finanzas</button>
-      <button class="navlink" data-nav="tareas"><span class="ni">✅</span> Tareas</button>
-      <button class="navlink" data-nav="habitos"><span class="ni">🔥</span> Hábitos</button>
-      <button class="navlink" data-nav="calendario"><span class="ni">📅</span> Calendario</button>
-      <button class="navlink" data-nav="ajustes"><span class="ni">⚙️</span> Ajustes</button>
-      <div class="drawer-foot">Tus datos viven solo en este dispositivo 🔒</div>
-    </nav>
 
     <div class="wrap">
       <!-- ===== INICIO ===== -->
@@ -486,14 +467,24 @@
     <!-- ===== FAB ===== -->
     <button class="fab" id="fab" aria-label="Añadir">+</button>
 
-    <!-- ===== Bottom nav ===== -->
-    <nav class="botnav">
+    <!-- ===== Navegación (barra inferior en móvil, barra lateral en escritorio) ===== -->
+    <nav class="botnav" aria-label="Navegación principal">
       <div class="botnav-inner">
+        <div class="nav-brand">
+          <span class="nav-brand-logo">📊</span>
+          <div>
+            <div class="nav-brand-name">Panel Personal</div>
+            <div class="nav-brand-date" id="navBrandDate"></div>
+          </div>
+        </div>
         <button class="navbtn" data-nav="home"><span class="ni">🏠</span><span class="nl">Inicio</span></button>
         <button class="navbtn" data-nav="finanzas"><span class="ni">💰</span><span class="nl">Finanzas</span></button>
         <button class="navbtn" data-nav="tareas"><span class="ni">✅</span><span class="nl">Tareas</span></button>
         <button class="navbtn" data-nav="habitos"><span class="ni">🔥</span><span class="nl">Hábitos</span></button>
         <button class="navbtn" data-nav="calendario"><span class="ni">📅</span><span class="nl">Agenda</span></button>
+        <button class="navbtn navbtn--settings" data-nav="ajustes">
+          <span class="ni">⚙️</span><span class="nl">Ajustes</span>
+        </button>
       </div>
     </nav>
 

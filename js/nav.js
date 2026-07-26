@@ -19,7 +19,6 @@ function switchView(v) {
   $("barTitle").textContent = VIEW_TITLE[v];
   $("fab").style.display = ["finanzas", "tareas", "habitos"].includes(v) ? "flex" : "none";
   window.scrollTo(0, 0);
-  closeDrawer();
   if (v === "home") renderHome();
   if (v === "calendario") renderCalendar();
   if (v === "finanzas") {
@@ -27,17 +26,6 @@ function switchView(v) {
     renderMonthlySummary();
   }
 }
-function openDrawer() {
-  $("drawer").classList.add("open");
-  $("scrim").classList.add("show");
-}
-function closeDrawer() {
-  $("drawer").classList.remove("open");
-  $("scrim").classList.remove("show");
-}
-
-$("hamburger").addEventListener("click", openDrawer);
-$("scrim").addEventListener("click", closeDrawer);
 $("gear").addEventListener("click", () => switchView("ajustes"));
 document.querySelectorAll("[data-nav]").forEach((el) => el.addEventListener("click", () => switchView(el.dataset.nav)));
 $("barWeather").addEventListener("click", () => switchView(state.config.city ? "home" : "ajustes"));
@@ -64,5 +52,5 @@ function renderChrome() {
   });
   $("homeGreet").textContent = `${greeting()} 👋`;
   $("homeDate").textContent = fecha;
-  $("drawerDate").textContent = fecha;
+  $("navBrandDate").textContent = fecha;
 }
