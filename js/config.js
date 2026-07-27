@@ -28,7 +28,9 @@ function renderCategories() {
         `<div class="rt"><span class="cat-dot" style="background:${CAT_COLOR(i)}"></span>
       <span style="flex:1 1 auto;">${esc(c)}</span>
       <input type="number" min="0" step="1" inputmode="decimal" class="cat-budget-input" data-catbudget="${esc(c)}" value="${budgets[c] || ""}" placeholder="límite/mes" title="Presupuesto mensual (vacío = sin límite)" />
-      ${c === "Otros" ? `<span class="rt-rep" title="Categoría de reserva">fija</span>` : `<button class="icon-btn" data-del-cat="${esc(c)}" title="Eliminar categoría">✕</button>`}</div>`
+      <button class="icon-btn" data-cat-up="${esc(c)}" title="Subir" aria-label="Subir categoría"${i === 0 ? " disabled" : ""}>▲</button>
+      <button class="icon-btn" data-cat-down="${esc(c)}" title="Bajar" aria-label="Bajar categoría"${i === state.categories.length - 1 ? " disabled" : ""}>▼</button>
+      ${c === "Otros" ? `<span class="rt-rep" title="Categoría de reserva">fija</span>` : `<button class="icon-btn" data-del-cat="${esc(c)}" title="Eliminar categoría" aria-label="Eliminar categoría">✕</button>`}</div>`
     )
     .join("");
 }

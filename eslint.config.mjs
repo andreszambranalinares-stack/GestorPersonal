@@ -130,6 +130,7 @@ export default [
         todayStr: "readonly",
         defaultState: "readonly",
         renderAll: "readonly",
+        renderHabits: "readonly",
         validateImportedState: "readonly",
         encryptState: "readonly",
         decryptState: "readonly",
