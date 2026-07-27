@@ -16,6 +16,8 @@ test.describe("Navegación", () => {
     await page.click('.navbtn[data-nav="finanzas"]');
     await expect(page.locator("#view-finanzas")).toBeVisible();
     await expect(page.locator('.navbtn[data-nav="finanzas"]')).toHaveClass(/active/);
+    await expect(page.locator('.navbtn[data-nav="finanzas"]')).toHaveAttribute("aria-current", "page");
+    await expect(page.locator('.navbtn[data-nav="home"]')).not.toHaveAttribute("aria-current", "page");
     await expect(page.locator("#barTitle")).toHaveText("Finanzas");
   });
 

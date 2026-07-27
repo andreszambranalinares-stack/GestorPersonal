@@ -1501,3 +1501,19 @@ button.icon-btn:active {
     animation: none;
   }
 }
+
+/* ---------- Accesibilidad: foco de teclado visible ---------- */
+/* :where() mantiene especificidad 0 para no pisar estilos existentes. */
+:where(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+/* En la navegación el anillo va pegado a la píldora del icono. */
+.navbtn:focus-visible {
+  outline-offset: -2px;
+}
+/* No mostramos anillo cuando el foco viene del ratón/toque (solo teclado). */
+:where(button, a, input, select, textarea):focus:not(:focus-visible) {
+  outline: none;
+}
