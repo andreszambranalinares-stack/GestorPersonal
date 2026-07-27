@@ -23,11 +23,14 @@ dispositivos.
 - **🌤️ Clima en vivo** vía [Open-Meteo](https://open-meteo.com) (sin API key).
 - **📱 App instalable** (PWA) que funciona **offline**, con **atajos** de instalación y
   pantalla de inicio ("Añadir gasto", "Nueva tarea").
-- **💾 Respaldo** — exportar/importar en JSON y exportar gastos a CSV.
+- **💾 Respaldo** — exportar/importar en JSON, exportar gastos a CSV e **informe mensual
+  imprimible / PDF** (ingresos, gastos por categoría, mayores gastos y productividad).
+- **🔔 Notificaciones** — aviso (al abrir la app) de tareas y hábitos pendientes de hoy.
 - **☁️ Copia en la nube (opcional)** — inicia sesión con un **enlace mágico** (sin
-  contraseñas) y **sube/baja** tu estado a tu cuenta para moverlo entre dispositivos, con
-  **cifrado de extremo a extremo** opcional. Desactivada por defecto; se activa en unos
-  minutos con [Supabase](https://supabase.com) — ver [`docs/CLOUD_SETUP.md`](docs/CLOUD_SETUP.md).
+  contraseñas) y **sube/baja** tu estado, o activa la **sincronización automática** entre
+  dispositivos, con **cifrado de extremo a extremo** opcional. Desactivada por defecto; se
+  activa en unos minutos con [Supabase](https://supabase.com) — ver
+  [`docs/CLOUD_SETUP.md`](docs/CLOUD_SETUP.md).
 
 ## 📸 Capturas
 

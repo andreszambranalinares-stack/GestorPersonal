@@ -194,6 +194,7 @@ function validateImportedState(parsed) {
     out.config.geoCity = str(c.geoCity, 80);
     out.config.geoName = str(c.geoName, 80);
     out.config.lastBackupAt = isDate(c.lastBackupAt) ? c.lastBackupAt : null;
+    out.config.notifications = !!c.notifications;
     // Presupuestos por categoría: solo montos > 0; se une al catálogo la categoría referenciada.
     out.config.categoryBudgets = {};
     if (c.categoryBudgets && typeof c.categoryBudgets === "object" && !Array.isArray(c.categoryBudgets)) {

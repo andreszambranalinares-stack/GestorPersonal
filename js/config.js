@@ -15,7 +15,46 @@ function renderConfig() {
   renderCatSelects();
   renderCategories();
   renderCloud();
+  renderNotif();
 }
+
+// ---------- Notificaciones ----------
+function notifSupported() {
+  return "Notification" in window;
+}
+function renderNotif() {
+  const toggle = $("notifToggle");
+  const status = $("notifStatus");
+  const btn = $("notifPermBtn");
+  if (!toggle || !status || !btn) return;
+  toggle.checked = !!state.config.notifications;
+  if (!notifSupported()) {
+    status.textContent = "Este navegador no admite notificaciones.";
+    btn.disabled = true;
+    return;
+  }
+  const perm = Notification.permission;
+  if (perm === "granted") {
+    status.textContent = "Permiso concedido ✓";
+    btn.disabled = true;
+  } else if (perm === "denied") {
+    status.textContent = "Permiso bloqueado; actívalo en los ajustes del navegador.";
+    btn.disabled = true;
+  } else {
+    status.textContent = 'Pulsa "Permitir" para recibir avisos del sistema.';
+    btn.disabled = false;
+  }
+}
+$("notifToggle").addEventListener("change", (e) => {
+  state.config.notifications = e.target.checked;
+  save();
+  if (e.target.checked && notifSupported() && Notification.permission === "default") {
+    Notification.requestPermission().then(renderNotif);
+  }
+});
+$("notifPermBtn").addEventListener("click", () => {
+  if (notifSupported() && Notification.permission === "default") Notification.requestPermission().then(renderNotif);
+});
 
 // ---------- Categorías personalizadas ----------
 function renderCategories() {

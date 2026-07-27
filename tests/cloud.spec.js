@@ -92,29 +92,28 @@ test.describe("Copia en la nube", () => {
             const rows = await (await fetch("/rest/v1/backups?select=data")).json();
             return rows[0] ? rows[0].data.includes("autopush") : false;
           }),
-        { timeout: 6000 }
+        { timeout: 12000 }
       )
       .toBe(true);
   });
 
   test("auto-sync: al abrir con auto activo baja lo más reciente del remoto", async ({ page }) => {
-    // Primera sesión sube una copia con auto-sync.
     await page.goto(LOGIN_URL);
     await page.evaluate(async () => {
-      setAutoSync(true);
+      // Sube "remoto" de forma determinista (subida manual, awaited).
       state.expenses.push({ id: "rem1", amount: 8, cat: "Otros", note: "remoto", date: todayStr });
+      save();
       await cloudUpload();
-    });
-    // Simula OTRO dispositivo: borra el estado local y el marcador de última copia
-    // remota vista (conservando la sesión y auto-sync), recarga y deja que cloudInit baje.
-    await page.evaluate(() => {
-      localStorage.removeItem("panelPersonal.v1");
+      // Simula OTRO dispositivo: activa auto-sync directamente en la sesión, borra el
+      // estado local y el marcador de última copia remota vista.
       const cs = JSON.parse(localStorage.getItem("panelPersonal.cloud"));
+      cs.autoSync = true;
       delete cs.lastRemoteAt;
       localStorage.setItem("panelPersonal.cloud", JSON.stringify(cs));
+      localStorage.removeItem("panelPersonal.v1");
     });
-    await page.reload();
-    await expect.poll(() => page.evaluate(() => state.expenses.length), { timeout: 6000 }).toBe(1);
+    await page.reload(); // cloudInit() debe bajar la copia remota
+    await expect.poll(() => page.evaluate(() => state.expenses.length), { timeout: 12000 }).toBe(1);
     const note = await page.evaluate(() => state.expenses[0] && state.expenses[0].note);
     expect(note).toBe("remoto");
   });

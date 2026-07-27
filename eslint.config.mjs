@@ -131,6 +131,7 @@ export default [
         defaultState: "readonly",
         renderAll: "readonly",
         renderHabits: "readonly",
+        checkTaskReminders: "readonly",
         validateImportedState: "readonly",
         encryptState: "readonly",
         decryptState: "readonly",

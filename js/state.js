@@ -41,6 +41,7 @@ const defaultState = () => ({
     geoCity: "",
     geoName: "",
     lastBackupAt: null, // "YYYY-MM-DD" de la última exportación exitosa
+    notifications: false, // mostrar notificaciones del sistema al abrir (recordatorios)
   },
 });
 
