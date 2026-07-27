@@ -138,6 +138,7 @@ export default [
         cloudUpload: "readonly",
         cloudDownload: "readonly",
         setAutoSync: "readonly",
+        cloudSyncDelay: "writable",
         buildMonthlyReport: "readonly",
         $: "readonly",
       },

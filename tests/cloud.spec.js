@@ -79,12 +79,17 @@ test.describe("Copia en la nube", () => {
 
   test("auto-sync: un cambio local se sube solo (debounce)", async ({ page }) => {
     await page.goto(LOGIN_URL);
-    await page.evaluate(() => setAutoSync(true));
+    // Debounce corto y determinista para la prueba (evita depender del reloj de CI).
+    await page.evaluate(() => {
+      cloudSyncDelay = 30;
+      const cs = JSON.parse(localStorage.getItem("panelPersonal.cloud"));
+      cs.autoSync = true;
+      localStorage.setItem("panelPersonal.cloud", JSON.stringify(cs));
+    });
     await page.evaluate(() => {
       state.expenses.push({ id: "as1", amount: 4, cat: "Otros", note: "autopush", date: todayStr });
-      save();
+      save(); // dispara queueCloudSync() -> cloudPush automático
     });
-    // Espera a que el debounce suba una copia que ya contiene el cambio.
     await expect
       .poll(
         () =>
@@ -92,7 +97,7 @@ test.describe("Copia en la nube", () => {
             const rows = await (await fetch("/rest/v1/backups?select=data")).json();
             return rows[0] ? rows[0].data.includes("autopush") : false;
           }),
-        { timeout: 12000 }
+        { timeout: 10000 }
       )
       .toBe(true);
   });

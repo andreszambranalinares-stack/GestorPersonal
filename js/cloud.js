@@ -383,11 +383,12 @@ function autoSyncOn() {
 }
 
 let cloudSyncTimer = null;
+let cloudSyncDelay = 2500; // retardo del debounce (las pruebas lo bajan para ser deterministas)
 // Llamado desde save() tras cada cambio: sube con un pequeño retardo (debounce).
 function queueCloudSync() {
   if (cloudApplying || !autoSyncOn()) return;
   clearTimeout(cloudSyncTimer);
-  cloudSyncTimer = setTimeout(() => cloudPush({ auto: true }), 2500);
+  cloudSyncTimer = setTimeout(() => cloudPush({ auto: true }), cloudSyncDelay);
 }
 
 function setAutoSync(on) {
