@@ -13,3 +13,9 @@ Desktop.ini
 
 # Herramientas de desarrollo (lint/format), no forman parte de la app en producción
 node_modules/
+
+# Artefactos de los tests (Playwright)
+test-results/
+playwright-report/
+blob-report/
+.playwright/

@@ -58,6 +58,20 @@ Abre `index.html` en tu navegador, o publícalo con **GitHub Pages**:
 | `manifest.webmanifest`  | Metadatos de la PWA                                                                                                                                                                                                            |
 | `sw.js`                 | Service worker (cache offline)                                                                                                                                                                                                 |
 | `icon.svg`              | Ícono de la app                                                                                                                                                                                                                |
+| `tests/`                | Pruebas end-to-end (Playwright): navegación, finanzas, validación de respaldo y copia en la nube                                                                                                                               |
+
+## 🧪 Desarrollo
+
+```bash
+npm ci             # instala herramientas de desarrollo
+npm run lint       # ESLint
+npm run format     # Prettier
+npm test           # pruebas end-to-end (Playwright, Chromium)
+```
+
+Las pruebas levantan la app con un pequeño servidor que además **emula Supabase**, de
+modo que nunca tocan un proyecto real. En cada `push` y `pull request`, GitHub Actions
+ejecuta el lint y la suite de pruebas.
 
 ## ☁️ Copia en la nube (opcional)
 

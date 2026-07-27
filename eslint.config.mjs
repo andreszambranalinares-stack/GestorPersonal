@@ -107,6 +107,37 @@ export default [
     },
   },
   {
+    // Infra de pruebas en Node (CommonJS).
+    files: ["tests/serve.js", "playwright.config.js"],
+    languageOptions: {
+      sourceType: "commonjs",
+      globals: globals.node,
+    },
+  },
+  {
+    // Specs de Playwright: corren en Node, pero sus callbacks de page.evaluate
+    // referencian los globals del navegador y de la app.
+    files: ["tests/**/*.spec.js"],
+    languageOptions: {
+      sourceType: "commonjs",
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+        state: "writable",
+        save: "readonly",
+        todayStr: "readonly",
+        defaultState: "readonly",
+        renderAll: "readonly",
+        validateImportedState: "readonly",
+        encryptState: "readonly",
+        decryptState: "readonly",
+        cloudUpload: "readonly",
+        cloudDownload: "readonly",
+        $: "readonly",
+      },
+    },
+  },
+  {
     files: ["eslint.config.mjs"],
     languageOptions: {
       sourceType: "module",
