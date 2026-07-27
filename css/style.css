@@ -1502,6 +1502,117 @@ button.icon-btn:active {
   }
 }
 
+/* ---------- Informe mensual imprimible ---------- */
+.report {
+  display: none;
+}
+@media print {
+  /* En impresión, solo se ve el informe. */
+  body {
+    padding: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .appbar,
+  .botnav,
+  .fab,
+  .wrap,
+  .toast-host,
+  .modal {
+    display: none !important;
+  }
+  .report {
+    display: block;
+  }
+  .report-page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 8px 4px;
+    font-size: 12pt;
+    color: #000;
+  }
+  .report-head {
+    border-bottom: 2px solid #000;
+    padding-bottom: 10px;
+    margin-bottom: 16px;
+  }
+  .report-brand {
+    font-size: 18pt;
+    font-weight: 700;
+  }
+  .report-logo {
+    margin-right: 4px;
+  }
+  .report-sub {
+    font-size: 13pt;
+    margin-top: 4px;
+    text-transform: capitalize;
+  }
+  .report-gen {
+    font-size: 9pt;
+    color: #555;
+    margin-top: 2px;
+  }
+  .report-kpis {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .report-kpi {
+    flex: 1;
+    border: 1px solid #bbb;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .report-kpi .k-l {
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #555;
+  }
+  .report-kpi .k-v {
+    font-size: 15pt;
+    font-weight: 700;
+  }
+  .report-kpi .pos {
+    color: #0a7a0a;
+  }
+  .report-kpi .neg {
+    color: #b12a2a;
+  }
+  .report-h {
+    font-size: 12pt;
+    margin: 16px 0 6px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 3px;
+  }
+  .report-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .report-table td {
+    padding: 5px 2px;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+  }
+  .report-table td.num {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .report-table .muted {
+    color: #666;
+  }
+  .report-foot {
+    margin-top: 22px;
+    padding-top: 8px;
+    border-top: 1px solid #ccc;
+    font-size: 9pt;
+    color: #666;
+    text-align: center;
+  }
+}
+
 /* ---------- Accesibilidad: foco de teclado visible ---------- */
 /* :where() mantiene especificidad 0 para no pisar estilos existentes. */
 :where(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
