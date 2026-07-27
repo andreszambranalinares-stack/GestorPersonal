@@ -176,15 +176,21 @@ async function handleAuthRedirect() {
   } catch {
     /* el correo es solo informativo */
   }
+  const prev = cloudSession() || {};
   setCloudSession({
     access_token,
     refresh_token,
     expires_at: Date.now() + expires_in * 1000,
     email,
     user_id: jwtSub(access_token),
+    // Conserva preferencias entre reinicios de sesión (mismo usuario).
+    autoSync: !!prev.autoSync,
+    lastRemoteAt: prev.lastRemoteAt,
+    encrypted: prev.encrypted,
   });
   toast("Sesión iniciada" + (email ? " como " + email : "") + ".", { type: "ok" });
   renderCloud();
+  cloudInit();
 }
 
 function cloudSignOut() {
@@ -193,21 +199,42 @@ function cloudSignOut() {
   renderCloud();
 }
 
-// ----- Subir / bajar -----
-async function cloudUpload() {
+// ----- Núcleo de subir / bajar (compartido por lo manual y lo automático) -----
+// Bandera para no reprogramar una sincronización mientras aplicamos una copia remota
+// (evita el bucle bajar → save() → subir).
+let cloudApplying = false;
+// Marca cuando una copia remota está cifrada y falta la frase para sincronizar.
+let cloudNeedsPass = false;
+
+function passValue() {
+  const el = $("cloudPass");
+  return el ? el.value : "";
+}
+
+// Sube el estado. auto=true: sin toasts ruidosos ni bloquear botones, y NUNCA
+// degrada a texto plano una copia que estaba cifrada.
+async function cloudPush({ auto = false } = {}) {
+  if (!cloudConfigured()) return false;
   const token = await cloudToken();
   if (!token) {
-    toast("Tu sesión expiró. Inicia sesión de nuevo.", { type: "warn" });
-    renderCloud();
-    return;
+    if (!auto) {
+      toast("Tu sesión expiró. Inicia sesión de nuevo.", { type: "warn" });
+      renderCloud();
+    }
+    return false;
   }
   const s = cloudSession();
+  const pass = passValue();
+  if (auto && s.encrypted && !pass) {
+    cloudNeedsPass = true;
+    renderCloud();
+    return false;
+  }
   const btn = $("cloudUploadBtn");
-  btn.disabled = true;
+  if (!auto && btn) btn.disabled = true;
   try {
-    const pass = $("cloudPass").value;
-    const plaintext = JSON.stringify(state);
-    const data = pass ? await encryptState(plaintext, pass) : plaintext;
+    const data = pass ? await encryptState(JSON.stringify(state), pass) : JSON.stringify(state);
+    const updatedAt = new Date().toISOString();
     const res = await fetch(`${SUPABASE_URL}/rest/v1/backups?on_conflict=user_id`, {
       method: "POST",
       headers: {
@@ -216,29 +243,40 @@ async function cloudUpload() {
         "Content-Type": "application/json",
         Prefer: "resolution=merge-duplicates,return=minimal",
       },
-      body: JSON.stringify([{ user_id: s.user_id, data, updated_at: new Date().toISOString() }]),
+      body: JSON.stringify([{ user_id: s.user_id, data, updated_at: updatedAt }]),
     });
     if (!res.ok) throw new Error(String(res.status));
-    s.lastSyncAt = new Date().toISOString();
+    s.lastSyncAt = updatedAt;
+    s.lastRemoteAt = updatedAt;
+    s.encrypted = !!pass;
     setCloudSession(s);
-    toast(pass ? "Copia cifrada subida a la nube." : "Copia subida a la nube.", { type: "ok" });
+    cloudNeedsPass = false;
+    if (!auto) toast(pass ? "Copia cifrada subida a la nube." : "Copia subida a la nube.", { type: "ok" });
     renderCloud();
+    return true;
   } catch {
-    toast("No se pudo subir la copia. Revisa tu conexión y la configuración.", { type: "err", duration: 8000 });
+    if (!auto)
+      toast("No se pudo subir la copia. Revisa tu conexión y la configuración.", { type: "err", duration: 8000 });
+    return false;
   } finally {
-    btn.disabled = false;
+    if (!auto && btn) btn.disabled = false;
   }
 }
 
-async function cloudDownload() {
+// Baja el estado. auto=true: sin confirmación ni toasts salvo avisos importantes,
+// y solo aplica si el remoto cambió desde la última sincronización.
+async function cloudPull({ auto = false } = {}) {
+  if (!cloudConfigured()) return false;
   const token = await cloudToken();
   if (!token) {
-    toast("Tu sesión expiró. Inicia sesión de nuevo.", { type: "warn" });
-    renderCloud();
-    return;
+    if (!auto) {
+      toast("Tu sesión expiró. Inicia sesión de nuevo.", { type: "warn" });
+      renderCloud();
+    }
+    return false;
   }
   const btn = $("cloudDownloadBtn");
-  btn.disabled = true;
+  if (!auto && btn) btn.disabled = true;
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/backups?select=data,updated_at`, {
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + token },
@@ -246,35 +284,40 @@ async function cloudDownload() {
     if (!res.ok) throw new Error(String(res.status));
     const rows = await res.json();
     if (!rows || !rows.length || !rows[0].data) {
-      toast("Todavía no hay ninguna copia en la nube.", { type: "warn" });
-      return;
+      if (!auto) toast("Todavía no hay ninguna copia en la nube.", { type: "warn" });
+      return false;
     }
-    const raw = rows[0].data;
+    const remoteAt = rows[0].updated_at;
+    const sess = cloudSession();
+    if (auto && sess && sess.lastRemoteAt && remoteAt === sess.lastRemoteAt) return false; // nada nuevo
 
-    // ¿Viene cifrado? (sobre AES-GCM)
+    const raw = rows[0].data;
     let envelope = null;
     try {
       const maybe = JSON.parse(raw);
       if (maybe && maybe.enc === "aes-gcm") envelope = maybe;
     } catch {
-      /* no es un sobre cifrado; se trata como JSON plano */
+      /* JSON plano */
     }
 
     let plaintext;
     if (envelope) {
-      const pass = $("cloudPass").value;
+      const pass = passValue();
       if (!pass) {
-        toast("Esta copia está cifrada. Escribe tu frase de cifrado y vuelve a intentarlo.", {
-          type: "warn",
-          duration: 9000,
-        });
-        return;
+        cloudNeedsPass = true;
+        renderCloud();
+        if (!auto)
+          toast("Esta copia está cifrada. Escribe tu frase de cifrado y vuelve a intentarlo.", {
+            type: "warn",
+            duration: 9000,
+          });
+        return false;
       }
       try {
         plaintext = await decryptState(envelope, pass);
       } catch {
-        toast("No se pudo descifrar: frase incorrecta o datos dañados.", { type: "err", duration: 8000 });
-        return;
+        if (!auto) toast("No se pudo descifrar: frase incorrecta o datos dañados.", { type: "err", duration: 8000 });
+        return false;
       }
     } else {
       plaintext = raw;
@@ -285,30 +328,80 @@ async function cloudDownload() {
       const parsed = JSON.parse(plaintext);
       ({ state: validated, skipped } = validateImportedState(parsed));
     } catch {
-      toast("La copia de la nube no es válida.", { type: "err" });
-      return;
+      if (!auto) toast("La copia de la nube no es válida.", { type: "err" });
+      return false;
     }
 
-    if (!confirm("Esto reemplazará los datos de ESTE dispositivo con la copia de la nube. ¿Continuar?")) return;
+    if (!auto && !confirm("Esto reemplazará los datos de ESTE dispositivo con la copia de la nube. ¿Continuar?"))
+      return false;
 
+    cloudApplying = true;
     state = validated;
     fetchedMonths.clear();
     save();
+    cloudApplying = false;
+    if (sess) {
+      sess.lastRemoteAt = remoteAt;
+      sess.lastSyncAt = remoteAt;
+      sess.encrypted = !!envelope;
+      setCloudSession(sess);
+    }
+    cloudNeedsPass = false;
     initValues();
     renderAll();
     loadWeather();
     toast(
-      skipped
-        ? `Copia descargada. Se omitieron ${skipped} elemento${skipped > 1 ? "s" : ""} no válido${skipped > 1 ? "s" : ""}.`
-        : "Copia descargada de la nube.",
+      auto
+        ? "Sincronizado desde la nube."
+        : skipped
+          ? `Copia descargada. Se omitieron ${skipped} elemento${skipped > 1 ? "s" : ""} no válido${skipped > 1 ? "s" : ""}.`
+          : "Copia descargada de la nube.",
       { type: skipped ? "warn" : "ok" }
     );
     renderCloud();
+    return true;
   } catch {
-    toast("No se pudo descargar la copia. Revisa tu conexión.", { type: "err", duration: 8000 });
+    if (!auto) toast("No se pudo descargar la copia. Revisa tu conexión.", { type: "err", duration: 8000 });
+    return false;
   } finally {
-    btn.disabled = false;
+    if (!auto && btn) btn.disabled = false;
   }
+}
+
+// Envoltorios de los botones manuales.
+function cloudUpload() {
+  return cloudPush({ auto: false });
+}
+function cloudDownload() {
+  return cloudPull({ auto: false });
+}
+
+// ----- Sincronización automática -----
+function autoSyncOn() {
+  const s = cloudSession();
+  return !!(s && s.access_token && s.autoSync);
+}
+
+let cloudSyncTimer = null;
+// Llamado desde save() tras cada cambio: sube con un pequeño retardo (debounce).
+function queueCloudSync() {
+  if (cloudApplying || !autoSyncOn()) return;
+  clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = setTimeout(() => cloudPush({ auto: true }), 2500);
+}
+
+function setAutoSync(on) {
+  const s = cloudSession();
+  if (!s) return;
+  s.autoSync = !!on;
+  setCloudSession(s);
+  renderCloud();
+  if (on) cloudPull({ auto: true }).then((pulled) => !pulled && cloudPush({ auto: true }));
+}
+
+// Al abrir la app estando con sesión y auto-sync: baja lo más reciente del remoto.
+function cloudInit() {
+  if (autoSyncOn()) cloudPull({ auto: true });
 }
 
 // ----- Render de la sección -----
@@ -326,7 +419,12 @@ function renderCloud() {
   $("cloudSignedIn").hidden = !signedIn;
   if (signedIn) {
     const last = s.lastSyncAt ? new Date(s.lastSyncAt).toLocaleString() : "—";
+    const auto = !!s.autoSync;
     $("cloudStatus").textContent = `Conectado como ${s.email || "(sin correo)"} · Última copia: ${last}`;
+    const chk = $("cloudAuto");
+    if (chk) chk.checked = auto;
+    const note = $("cloudNeedsPass");
+    if (note) note.hidden = !(auto && cloudNeedsPass);
   }
 }
 
@@ -336,4 +434,9 @@ if ($("cloudSendLink")) {
   $("cloudUploadBtn").addEventListener("click", cloudUpload);
   $("cloudDownloadBtn").addEventListener("click", cloudDownload);
   $("cloudSignOutBtn").addEventListener("click", cloudSignOut);
+  $("cloudAuto").addEventListener("change", (e) => setAutoSync(e.target.checked));
+  // Si escribe la frase, reintenta la sincronización pendiente por falta de clave.
+  $("cloudPass").addEventListener("input", () => {
+    if (cloudNeedsPass && passValue() && autoSyncOn()) cloudPull({ auto: true });
+  });
 }

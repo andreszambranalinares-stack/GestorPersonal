@@ -158,6 +158,7 @@ function init() {
   switchView("home");
   applyUrlShortcut();
   handleAuthRedirect();
+  cloudInit();
   loadWeather();
   checkTaskReminders();
   if (stateLoadError) {

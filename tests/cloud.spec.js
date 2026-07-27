@@ -77,6 +77,48 @@ test.describe("Copia en la nube", () => {
     expect(restored).toBe("secreto");
   });
 
+  test("auto-sync: un cambio local se sube solo (debounce)", async ({ page }) => {
+    await page.goto(LOGIN_URL);
+    await page.evaluate(() => setAutoSync(true));
+    await page.evaluate(() => {
+      state.expenses.push({ id: "as1", amount: 4, cat: "Otros", note: "autopush", date: todayStr });
+      save();
+    });
+    // Espera a que el debounce suba una copia que ya contiene el cambio.
+    await expect
+      .poll(
+        () =>
+          page.evaluate(async () => {
+            const rows = await (await fetch("/rest/v1/backups?select=data")).json();
+            return rows[0] ? rows[0].data.includes("autopush") : false;
+          }),
+        { timeout: 6000 }
+      )
+      .toBe(true);
+  });
+
+  test("auto-sync: al abrir con auto activo baja lo más reciente del remoto", async ({ page }) => {
+    // Primera sesión sube una copia con auto-sync.
+    await page.goto(LOGIN_URL);
+    await page.evaluate(async () => {
+      setAutoSync(true);
+      state.expenses.push({ id: "rem1", amount: 8, cat: "Otros", note: "remoto", date: todayStr });
+      await cloudUpload();
+    });
+    // Simula OTRO dispositivo: borra el estado local y el marcador de última copia
+    // remota vista (conservando la sesión y auto-sync), recarga y deja que cloudInit baje.
+    await page.evaluate(() => {
+      localStorage.removeItem("panelPersonal.v1");
+      const cs = JSON.parse(localStorage.getItem("panelPersonal.cloud"));
+      delete cs.lastRemoteAt;
+      localStorage.setItem("panelPersonal.cloud", JSON.stringify(cs));
+    });
+    await page.reload();
+    await expect.poll(() => page.evaluate(() => state.expenses.length), { timeout: 6000 }).toBe(1);
+    const note = await page.evaluate(() => state.expenses[0] && state.expenses[0].note);
+    expect(note).toBe("remoto");
+  });
+
   test("cifrado E2E: con frase incorrecta no restaura", async ({ page }) => {
     await page.goto(LOGIN_URL);
     await page.evaluate(async () => {

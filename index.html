@@ -442,9 +442,16 @@
           </div>
           <div id="cloudSignedIn" hidden>
             <div class="mini" id="cloudStatus"></div>
+            <label class="cfg-row" style="cursor: pointer">
+              <span>🔄 Sincronización automática</span>
+              <input type="checkbox" id="cloudAuto" style="width: auto; flex: 0 0 auto" />
+            </label>
             <div class="cfg-row">
               <label for="cloudPass">Frase de cifrado (opcional)</label>
               <input type="password" id="cloudPass" placeholder="Vacío = sin cifrar" autocomplete="off" />
+            </div>
+            <div class="mini" id="cloudNeedsPass" hidden style="color: var(--warn)">
+              Tu copia en la nube está cifrada. Escribe tu frase de cifrado para sincronizar en este dispositivo.
             </div>
             <div class="btn-grid">
               <button class="btn" id="cloudUploadBtn">☁️⬆️ Subir a la nube</button>
@@ -452,8 +459,9 @@
               <button class="ghost" id="cloudSignOutBtn" style="color: var(--danger)">Cerrar sesión</button>
             </div>
             <div class="mini">
-              Con una frase de cifrado, tus datos se cifran en este dispositivo antes de subir y el servidor solo guarda
-              texto cifrado. Apúntala bien: sin ella no podrás recuperar la copia.
+              Con la sincronización automática, cada cambio se guarda en la nube y al abrir la app se trae lo más
+              reciente. Con una frase de cifrado, tus datos se cifran en este dispositivo antes de subir y el servidor
+              solo guarda texto cifrado. Apúntala bien: sin ella no podrás recuperar la copia.
             </div>
           </div>
         </div>
