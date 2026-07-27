@@ -65,13 +65,18 @@ function renderTasks() {
     : "";
   renderRoutines();
 }
-// Aviso (al abrir la app) de las tareas de hoy sin hacer. Sin backend no hay push en segundo plano.
+// Aviso (al abrir la app) de tareas y hábitos pendientes de hoy.
+// Nota: sin backend no hay push en segundo plano; el aviso se da al abrir la app.
 function checkTaskReminders() {
-  const due = state.tasks.filter((t) => t.date === todayStr && !t.done).length;
-  if (!due) return;
-  const msg = `Tienes ${due} tarea${due > 1 ? "s" : ""} pendiente${due > 1 ? "s" : ""} para hoy.`;
+  const dueTasks = state.tasks.filter((t) => t.date === todayStr && !t.done).length;
+  const pendingHabits = state.habits.filter((h) => !h.log[todayStr]).length;
+  const parts = [];
+  if (dueTasks) parts.push(`${dueTasks} tarea${dueTasks > 1 ? "s" : ""} pendiente${dueTasks > 1 ? "s" : ""}`);
+  if (pendingHabits) parts.push(`${pendingHabits} hábito${pendingHabits > 1 ? "s" : ""} por marcar`);
+  if (!parts.length) return;
+  const msg = `Hoy tienes ${parts.join(" y ")}.`;
   toast(msg, { type: "info", duration: 6000 });
-  notify(msg);
+  if (state.config.notifications) notify(msg);
 }
 const REPEAT_LBL = { diario: "Diario", laborables: "Laborables", semanal: "Semanal" };
 const REPEATS = Object.keys(REPEAT_LBL);

@@ -229,6 +229,9 @@
           <h2><span class="em">📊</span> Resumen por mes <span class="right" id="msAvg"></span></h2>
           <div class="ms-chart" id="msChart"></div>
           <div class="mini" id="finInsight" style="margin-top: 12px"></div>
+          <div class="btn-grid" style="margin-top: 14px">
+            <button class="ghost" id="btnReport">🖨️ Informe del mes (PDF)</button>
+          </div>
         </div>
 
         <div class="card">
@@ -412,6 +415,21 @@
           </div>
         </div>
         <div class="card">
+          <h2><span class="em">🔔</span> Notificaciones</h2>
+          <label class="cfg-row" style="cursor: pointer">
+            <span>Recordarme tareas y hábitos al abrir</span>
+            <input type="checkbox" id="notifToggle" style="width: auto; flex: 0 0 auto" />
+          </label>
+          <div class="btn-grid" style="margin-top: 4px">
+            <button class="ghost" id="notifPermBtn">Permitir notificaciones</button>
+          </div>
+          <div class="mini" id="notifStatus"></div>
+          <div class="mini">
+            Al abrir la app te avisa de lo que tienes pendiente hoy. Los avisos aparecen al abrirla: sin un servidor de
+            envío no es posible mandarlos con la app cerrada.
+          </div>
+        </div>
+        <div class="card">
           <h2><span class="em">💾</span> Respaldo</h2>
           <div class="btn-grid">
             <button class="ghost" id="btnExport">⬇️ Exportar (JSON)</button>
@@ -442,9 +460,16 @@
           </div>
           <div id="cloudSignedIn" hidden>
             <div class="mini" id="cloudStatus"></div>
+            <label class="cfg-row" style="cursor: pointer">
+              <span>🔄 Sincronización automática</span>
+              <input type="checkbox" id="cloudAuto" style="width: auto; flex: 0 0 auto" />
+            </label>
             <div class="cfg-row">
               <label for="cloudPass">Frase de cifrado (opcional)</label>
               <input type="password" id="cloudPass" placeholder="Vacío = sin cifrar" autocomplete="off" />
+            </div>
+            <div class="mini" id="cloudNeedsPass" hidden style="color: var(--warn)">
+              Tu copia en la nube está cifrada. Escribe tu frase de cifrado para sincronizar en este dispositivo.
             </div>
             <div class="btn-grid">
               <button class="btn" id="cloudUploadBtn">☁️⬆️ Subir a la nube</button>
@@ -452,8 +477,9 @@
               <button class="ghost" id="cloudSignOutBtn" style="color: var(--danger)">Cerrar sesión</button>
             </div>
             <div class="mini">
-              Con una frase de cifrado, tus datos se cifran en este dispositivo antes de subir y el servidor solo guarda
-              texto cifrado. Apúntala bien: sin ella no podrás recuperar la copia.
+              Con la sincronización automática, cada cambio se guarda en la nube y al abrir la app se trae lo más
+              reciente. Con una frase de cifrado, tus datos se cifran en este dispositivo antes de subir y el servidor
+              solo guarda texto cifrado. Apúntala bien: sin ella no podrás recuperar la copia.
             </div>
           </div>
         </div>
@@ -490,7 +516,7 @@
 
     <!-- ===== Modal detalle del día ===== -->
     <div class="modal" id="modal">
-      <div class="modal-box">
+      <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <div class="modal-grip"></div>
         <div class="modal-head">
           <h3 id="modalTitle"></h3>
@@ -502,6 +528,9 @@
 
     <!-- ===== Toasts ===== -->
     <div class="toast-host" id="toastHost" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- ===== Informe imprimible (oculto en pantalla, visible al imprimir) ===== -->
+    <div id="reportRoot" class="report" aria-hidden="true"></div>
 
     <script src="js/supabase-config.js"></script>
     <script src="js/state.js"></script>
@@ -517,6 +546,7 @@
     <script src="js/config.js"></script>
     <script src="js/backup.js"></script>
     <script src="js/cloud.js"></script>
+    <script src="js/report.js"></script>
     <script src="js/pomodoro.js"></script>
     <script src="js/app.js"></script>
   </body>

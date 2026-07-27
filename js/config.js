@@ -15,7 +15,46 @@ function renderConfig() {
   renderCatSelects();
   renderCategories();
   renderCloud();
+  renderNotif();
 }
+
+// ---------- Notificaciones ----------
+function notifSupported() {
+  return "Notification" in window;
+}
+function renderNotif() {
+  const toggle = $("notifToggle");
+  const status = $("notifStatus");
+  const btn = $("notifPermBtn");
+  if (!toggle || !status || !btn) return;
+  toggle.checked = !!state.config.notifications;
+  if (!notifSupported()) {
+    status.textContent = "Este navegador no admite notificaciones.";
+    btn.disabled = true;
+    return;
+  }
+  const perm = Notification.permission;
+  if (perm === "granted") {
+    status.textContent = "Permiso concedido ✓";
+    btn.disabled = true;
+  } else if (perm === "denied") {
+    status.textContent = "Permiso bloqueado; actívalo en los ajustes del navegador.";
+    btn.disabled = true;
+  } else {
+    status.textContent = 'Pulsa "Permitir" para recibir avisos del sistema.';
+    btn.disabled = false;
+  }
+}
+$("notifToggle").addEventListener("change", (e) => {
+  state.config.notifications = e.target.checked;
+  save();
+  if (e.target.checked && notifSupported() && Notification.permission === "default") {
+    Notification.requestPermission().then(renderNotif);
+  }
+});
+$("notifPermBtn").addEventListener("click", () => {
+  if (notifSupported() && Notification.permission === "default") Notification.requestPermission().then(renderNotif);
+});
 
 // ---------- Categorías personalizadas ----------
 function renderCategories() {
@@ -28,7 +67,9 @@ function renderCategories() {
         `<div class="rt"><span class="cat-dot" style="background:${CAT_COLOR(i)}"></span>
       <span style="flex:1 1 auto;">${esc(c)}</span>
       <input type="number" min="0" step="1" inputmode="decimal" class="cat-budget-input" data-catbudget="${esc(c)}" value="${budgets[c] || ""}" placeholder="límite/mes" title="Presupuesto mensual (vacío = sin límite)" />
-      ${c === "Otros" ? `<span class="rt-rep" title="Categoría de reserva">fija</span>` : `<button class="icon-btn" data-del-cat="${esc(c)}" title="Eliminar categoría">✕</button>`}</div>`
+      <button class="icon-btn" data-cat-up="${esc(c)}" title="Subir" aria-label="Subir categoría"${i === 0 ? " disabled" : ""}>▲</button>
+      <button class="icon-btn" data-cat-down="${esc(c)}" title="Bajar" aria-label="Bajar categoría"${i === state.categories.length - 1 ? " disabled" : ""}>▼</button>
+      ${c === "Otros" ? `<span class="rt-rep" title="Categoría de reserva">fija</span>` : `<button class="icon-btn" data-del-cat="${esc(c)}" title="Eliminar categoría" aria-label="Eliminar categoría">✕</button>`}</div>`
     )
     .join("");
 }

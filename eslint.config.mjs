@@ -25,6 +25,8 @@ export default [
         cloudConfigured: "readonly",
         renderCloud: "readonly",
         handleAuthRedirect: "readonly",
+        cloudInit: "readonly",
+        queueCloudSync: "readonly",
         validateImportedState: "readonly",
         DEFAULT_CATEGORIES: "readonly",
         CAT_COLOR: "readonly",
@@ -104,6 +106,42 @@ export default [
     languageOptions: {
       sourceType: "script",
       globals: globals.serviceworker,
+    },
+  },
+  {
+    // Infra de pruebas en Node (CommonJS).
+    files: ["tests/serve.js", "playwright.config.js"],
+    languageOptions: {
+      sourceType: "commonjs",
+      globals: globals.node,
+    },
+  },
+  {
+    // Specs de Playwright: corren en Node, pero sus callbacks de page.evaluate
+    // referencian los globals del navegador y de la app.
+    files: ["tests/**/*.spec.js"],
+    languageOptions: {
+      sourceType: "commonjs",
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+        state: "writable",
+        save: "readonly",
+        todayStr: "readonly",
+        defaultState: "readonly",
+        renderAll: "readonly",
+        renderHabits: "readonly",
+        checkTaskReminders: "readonly",
+        validateImportedState: "readonly",
+        encryptState: "readonly",
+        decryptState: "readonly",
+        cloudUpload: "readonly",
+        cloudDownload: "readonly",
+        setAutoSync: "readonly",
+        cloudSyncDelay: "writable",
+        buildMonthlyReport: "readonly",
+        $: "readonly",
+      },
     },
   },
   {

@@ -39,7 +39,8 @@ function renderHabits() {
           return `<div class="habit"><div class="habit-head">
             <span class="habit-name">${esc(h.name)}</span>
             <span class="streak">🔥 ${st} día${st !== 1 ? "s" : ""}</span>
-            <button class="icon-btn" data-del-habit="${h.id}" title="Eliminar">✕</button>
+            <button class="icon-btn" data-rename-habit="${h.id}" title="Renombrar" aria-label="Renombrar hábito">✏️</button>
+            <button class="icon-btn" data-del-habit="${h.id}" title="Eliminar" aria-label="Eliminar hábito">✕</button>
           </div><div class="week">${cells}</div></div>`;
         })
         .join("")

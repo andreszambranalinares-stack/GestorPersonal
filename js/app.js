@@ -16,10 +16,32 @@ function renderAll() {
 // ---------- Delegación de clicks ----------
 document.body.addEventListener("click", (e) => {
   const b = e.target.closest(
-    "[data-del-exp],[data-del-inc],[data-del-task],[data-del-habit],[data-del-routine],[data-del-goal],[data-goal-add],[data-habit],[data-edit-exp],[data-edit-inc],[data-edit-task],[data-del-fixed],[data-del-fincome],[data-del-cat]"
+    "[data-del-exp],[data-del-inc],[data-del-task],[data-del-habit],[data-del-routine],[data-del-goal],[data-goal-add],[data-habit],[data-edit-exp],[data-edit-inc],[data-edit-task],[data-del-fixed],[data-del-fincome],[data-del-cat],[data-rename-habit],[data-cat-up],[data-cat-down]"
   );
   if (!b) return;
-  if (b.dataset.editExp) {
+  if (b.dataset.renameHabit) {
+    const h = state.habits.find((x) => x.id === b.dataset.renameHabit);
+    if (!h) return;
+    const v = prompt("Nuevo nombre del hábito:", h.name);
+    if (v == null) return;
+    const name = v.trim().slice(0, 60);
+    if (!name) return;
+    h.name = name;
+    save();
+    renderHabits();
+    renderHome();
+  } else if (b.dataset.catUp || b.dataset.catDown) {
+    const cat = b.dataset.catUp || b.dataset.catDown;
+    const i = state.categories.indexOf(cat);
+    const j = b.dataset.catUp ? i - 1 : i + 1;
+    if (i < 0 || j < 0 || j >= state.categories.length) return;
+    [state.categories[i], state.categories[j]] = [state.categories[j], state.categories[i]];
+    save();
+    renderCategories();
+    renderCatSelects();
+    renderFinance();
+    renderMonthlySummary();
+  } else if (b.dataset.editExp) {
     startEditTx("g", b.dataset.editExp);
   } else if (b.dataset.editInc) {
     startEditTx("i", b.dataset.editInc);
@@ -158,6 +180,7 @@ function init() {
   switchView("home");
   applyUrlShortcut();
   handleAuthRedirect();
+  cloudInit();
   loadWeather();
   checkTaskReminders();
   if (stateLoadError) {

@@ -41,6 +41,7 @@ const defaultState = () => ({
     geoCity: "",
     geoName: "",
     lastBackupAt: null, // "YYYY-MM-DD" de la última exportación exitosa
+    notifications: false, // mostrar notificaciones del sistema al abrir (recordatorios)
   },
 });
 
@@ -66,6 +67,8 @@ function load() {
 }
 function save() {
   localStorage.setItem(KEY, JSON.stringify(state));
+  // Si la sincronización automática está activa, sube el cambio (con debounce).
+  if (typeof queueCloudSync === "function") queueCloudSync();
 }
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const $ = (id) => document.getElementById(id);

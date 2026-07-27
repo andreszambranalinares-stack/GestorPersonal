@@ -15,7 +15,12 @@ function switchView(v) {
   if (!VIEWS.includes(v)) v = "home";
   currentView = v;
   document.querySelectorAll(".view").forEach((el) => el.classList.toggle("active", el.id === "view-" + v));
-  document.querySelectorAll("[data-nav]").forEach((el) => el.classList.toggle("active", el.dataset.nav === v));
+  document.querySelectorAll("[data-nav]").forEach((el) => {
+    const on = el.dataset.nav === v;
+    el.classList.toggle("active", on);
+    if (on) el.setAttribute("aria-current", "page");
+    else el.removeAttribute("aria-current");
+  });
   $("barTitle").textContent = VIEW_TITLE[v];
   $("fab").style.display = ["finanzas", "tareas", "habitos"].includes(v) ? "flex" : "none";
   window.scrollTo(0, 0);
