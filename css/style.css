@@ -583,11 +583,28 @@ button.icon-btn:active {
   display: flex;
   align-items: center;
   gap: 11px;
-  padding: 11px 4px;
+  padding: 10px 6px;
   border-bottom: 1px solid var(--hairline);
+  border-radius: 10px;
 }
 .item:last-child {
   border-bottom: none;
+}
+.mv-badge {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1;
+}
+.mv-badge.income {
+  background: color-mix(in srgb, var(--good) 18%, transparent);
+  color: var(--good);
 }
 .item .cat-dot {
   width: 11px;
@@ -600,7 +617,8 @@ button.icon-btn:active {
   min-width: 0;
 }
 .item .desc .t {
-  font-size: 0.94rem;
+  font-size: 0.95rem;
+  font-weight: 550;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -608,10 +626,17 @@ button.icon-btn:active {
 .item .desc .s {
   font-size: 0.76rem;
   color: var(--muted);
+  margin-top: 1px;
 }
 .item .val {
-  font-weight: 650;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+@media (hover: hover) and (pointer: fine) {
+  .item:hover {
+    background: var(--surface-2);
+  }
 }
 .empty {
   color: var(--muted);
@@ -663,18 +688,37 @@ button.icon-btn:active {
   padding: 12px 8px;
   text-align: center;
 }
+.bal-in {
+  background: color-mix(in srgb, var(--good) 8%, var(--surface-2));
+  border-color: color-mix(in srgb, var(--good) 25%, var(--hairline));
+}
+.bal-out {
+  background: color-mix(in srgb, var(--danger) 8%, var(--surface-2));
+  border-color: color-mix(in srgb, var(--danger) 25%, var(--hairline));
+}
+.bal-net {
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface-2));
+  border-color: color-mix(in srgb, var(--accent) 25%, var(--hairline));
+}
 .bal .bl {
   font-size: 0.7rem;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  font-weight: 600;
+  font-weight: 700;
+}
+.bal-in .bl {
+  color: var(--good);
+}
+.bal-out .bl {
+  color: var(--danger);
 }
 .bal .bv {
   font-size: 1.15rem;
-  font-weight: 700;
-  margin-top: 4px;
+  font-weight: 800;
+  margin-top: 5px;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 .pos {
   color: var(--good);
@@ -827,54 +871,6 @@ button.icon-btn:active {
 }
 
 /* Pomodoro */
-.pomo {
-  padding: 18px;
-  border: 1px solid var(--hairline);
-  border-radius: 16px;
-  background: var(--surface-2);
-  text-align: center;
-}
-.pomo.break {
-  border-color: var(--good);
-}
-.pomo-time {
-  font-size: 3rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
-  line-height: 1.05;
-}
-.pomo-mode {
-  font-size: 0.76rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--muted);
-  margin-bottom: 6px;
-}
-.pomo-mode b {
-  color: var(--accent);
-}
-.pomo.break .pomo-mode b {
-  color: var(--good);
-}
-.pomo-ctrls {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  margin-top: 14px;
-}
-.pomo-ctrls button {
-  padding: 10px 20px;
-}
-.pomo.ring {
-  animation: pomoPulse 0.8s ease-in-out 3;
-}
-@keyframes pomoPulse {
-  50% {
-    box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 45%, transparent);
-  }
-}
-
 /* ---------- Habits ---------- */
 .habit {
   padding: 14px 2px;

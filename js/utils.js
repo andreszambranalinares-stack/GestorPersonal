@@ -19,6 +19,16 @@ function moneyShort(n) {
 function esc(s) {
   return String(s || "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 }
+// Notificación del sistema (si el usuario concedió permiso).
+function notify(msg) {
+  if ("Notification" in window && Notification.permission === "granted") {
+    try {
+      new Notification("Panel Personal", { body: msg });
+    } catch {
+      /* sin notificación disponible */
+    }
+  }
+}
 // Resalte transitorio de la fila recién creada (por id de movimiento o tarea).
 function flashNew(id) {
   const el = document.querySelector(`[data-del-exp="${id}"],[data-del-inc="${id}"],[data-task="${id}"]`);

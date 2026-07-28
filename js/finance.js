@@ -62,21 +62,25 @@ function renderFinance() {
   $("finFilterCount").textContent = filtering ? `${movs.length} de ${allMovs.length}` : "";
   $("finList").innerHTML = movs.length
     ? movs
-        .map((mv) =>
-          mv.kind === "i"
-            ? `<div class="item income">
-        <span class="cat-dot" style="background:var(--good)"></span>
-        <div class="desc"><div class="t">${esc(mv.note) || "Ingreso"}</div><div class="s">Ingreso · ${mv.date.slice(8, 10)}/${mv.date.slice(5, 7)}</div></div>
-        <span class="val">+${money(mv.amount)}</span>
-        <button class="icon-btn" data-edit-inc="${mv.id}" title="Editar">✏️</button>
-        <button class="icon-btn" data-del-inc="${mv.id}" title="Eliminar">✕</button></div>`
-            : `<div class="item">
-        <span class="cat-dot" style="background:${catColor(mv.cat)}"></span>
-        <div class="desc"><div class="t">${esc(mv.note) || esc(mv.cat)}</div><div class="s">${esc(mv.cat)} · ${mv.date.slice(8, 10)}/${mv.date.slice(5, 7)}</div></div>
-        <span class="val">${money(mv.amount)}</span>
-        <button class="icon-btn" data-edit-exp="${mv.id}" title="Editar">✏️</button>
-        <button class="icon-btn" data-del-exp="${mv.id}" title="Eliminar">✕</button></div>`
-        )
+        .map((mv) => {
+          const dm = `${mv.date.slice(8, 10)}/${mv.date.slice(5, 7)}`;
+          if (mv.kind === "i") {
+            return `<div class="item income">
+        <span class="mv-badge income">↑</span>
+        <div class="desc"><div class="t">${esc(mv.note) || "Ingreso"}</div><div class="s">Ingreso · ${dm}</div></div>
+        <span class="val pos">+${money(mv.amount)}</span>
+        <button class="icon-btn" data-edit-inc="${mv.id}" title="Editar" aria-label="Editar ingreso">✏️</button>
+        <button class="icon-btn" data-del-inc="${mv.id}" title="Eliminar" aria-label="Eliminar ingreso">✕</button></div>`;
+          }
+          const col = catColor(mv.cat);
+          const initial = esc((mv.cat || "?").trim().charAt(0).toUpperCase() || "?");
+          return `<div class="item">
+        <span class="mv-badge" style="background:color-mix(in srgb, ${col} 20%, transparent);color:${col}">${initial}</span>
+        <div class="desc"><div class="t">${esc(mv.note) || esc(mv.cat)}</div><div class="s">${esc(mv.cat)} · ${dm}</div></div>
+        <span class="val">−${money(mv.amount)}</span>
+        <button class="icon-btn" data-edit-exp="${mv.id}" title="Editar" aria-label="Editar gasto">✏️</button>
+        <button class="icon-btn" data-del-exp="${mv.id}" title="Eliminar" aria-label="Eliminar gasto">✕</button></div>`;
+        })
         .join("")
     : `<div class="empty">${filtering ? "Ningún movimiento coincide con el filtro." : "Agrega tu primer movimiento 👇"}</div>`;
   renderBalance(m);
