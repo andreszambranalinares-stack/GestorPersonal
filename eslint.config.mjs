@@ -135,6 +135,7 @@ export default [
         defaultState: "readonly",
         renderAll: "readonly",
         renderFinance: "readonly",
+        renderHome: "readonly",
         renderHabits: "readonly",
         switchView: "readonly",
         rolloverTasks: "readonly",
