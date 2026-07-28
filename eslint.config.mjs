@@ -51,7 +51,6 @@ export default [
         money: "readonly",
         moneyShort: "readonly",
         pad: "readonly",
-        pomoRender: "readonly",
         renderAll: "readonly",
         renderBalance: "readonly",
         renderCalendar: "readonly",

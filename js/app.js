@@ -176,7 +176,6 @@ function init() {
   rolloverFixedIncomes();
   initValues();
   renderAll();
-  pomoRender();
   switchView("home");
   applyUrlShortcut();
   handleAuthRedirect();

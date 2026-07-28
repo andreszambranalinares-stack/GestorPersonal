@@ -86,15 +86,15 @@
             /></span>
           </h2>
           <div class="bal-grid">
-            <div class="bal">
-              <div class="bl">Ingresos</div>
+            <div class="bal bal-in">
+              <div class="bl">↑ Ingresos</div>
               <div class="bv pos" id="balIn">—</div>
             </div>
-            <div class="bal">
-              <div class="bl">Gastos</div>
+            <div class="bal bal-out">
+              <div class="bl">↓ Gastos</div>
               <div class="bv neg" id="balOut">—</div>
             </div>
-            <div class="bal">
+            <div class="bal bal-net">
               <div class="bl">Saldo</div>
               <div class="bv" id="balNet">—</div>
             </div>
@@ -302,18 +302,6 @@
           <div class="list" id="taskList"></div>
           <div id="taskUpcoming"></div>
           <div class="routines" id="routinesBox"></div>
-        </div>
-        <div class="card">
-          <h2><span class="em">🍅</span> Temporizador de enfoque</h2>
-          <div class="pomo" id="pomo">
-            <div class="pomo-mode">Modo · <b id="pomoMode">Enfoque</b></div>
-            <div class="pomo-time" id="pomoTime">25:00</div>
-            <div class="pomo-ctrls">
-              <button class="btn" id="pomoStart" type="button">Iniciar</button>
-              <button class="ghost" id="pomoReset" type="button">Reiniciar</button>
-              <button class="ghost" id="pomoSkip" type="button" title="Cambiar enfoque/descanso">⏭</button>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -631,7 +619,6 @@
     <script src="js/csv.js"></script>
     <script src="js/cloud.js"></script>
     <script src="js/report.js"></script>
-    <script src="js/pomodoro.js"></script>
     <script src="js/lock.js"></script>
     <script src="js/app.js"></script>
   </body>
