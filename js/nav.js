@@ -38,7 +38,7 @@ $("weatherHero").addEventListener("click", () => {
   if (!state.config.city) switchView("ajustes");
 });
 $("fab").addEventListener("click", () => {
-  if (currentView === "finanzas") $("finAmount").focus();
+  if (currentView === "finanzas") openAddSheet();
   else if (currentView === "tareas") $("taskText").focus();
   else if (currentView === "habitos") $("habitName").focus();
 });

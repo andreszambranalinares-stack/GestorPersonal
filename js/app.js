@@ -153,6 +153,7 @@ if (location.protocol.startsWith("http")) {
 // ---------- Init ----------
 function initValues() {
   $("finMonth").value = curMonth();
+  $("finDate").value = todayStr;
   $("taskDate").value = todayStr;
   renderConfig();
   renderFocus();
@@ -164,7 +165,7 @@ function applyUrlShortcut() {
   if (!go || !VIEWS.includes(go)) return;
   switchView(go);
   if (params.get("add") === "1") {
-    if (go === "finanzas") $("finAmount").focus();
+    if (go === "finanzas") openAddSheet();
     else if (go === "tareas") $("taskText").focus();
     else if (go === "habitos") $("habitName").focus();
   }

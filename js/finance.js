@@ -8,6 +8,12 @@ function renderCatSelects() {
   if (finCat) finCat.innerHTML = opts;
   const fixedCat = $("fixedCat");
   if (fixedCat) fixedCat.innerHTML = opts;
+  const qaCat = $("qaCat");
+  if (qaCat) {
+    const prevQa = qaCat.value;
+    qaCat.innerHTML = opts;
+    if (state.categories.includes(prevQa)) qaCat.value = prevQa;
+  }
   const filterCat = $("finFilterCat");
   if (filterCat) {
     const prev = filterCat.value;
@@ -297,6 +303,17 @@ document.querySelectorAll("#txType .seg-btn").forEach((b) =>
     setTxType(b.dataset.type);
   })
 );
+// Fecha válida "YYYY-MM-DD" o, si no, hoy.
+function validDate(v) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : todayStr;
+}
+// Alta de un movimiento (compartida por el formulario y la hoja rápida). Devuelve el id.
+function addMovement(kind, amount, cat, note, date) {
+  const id = uid();
+  if (kind === "ingreso") state.incomes.push({ id, amount, note, date });
+  else state.expenses.push({ id, amount, cat, note, date });
+  return id;
+}
 function startEditTx(kind, id) {
   const rec = kind === "i" ? state.incomes.find((x) => x.id === id) : state.expenses.find((x) => x.id === id);
   if (!rec) return;
@@ -304,6 +321,7 @@ function startEditTx(kind, id) {
   setTxType(kind === "i" ? "ingreso" : "gasto");
   $("finAmount").value = rec.amount;
   $("finNote").value = rec.note || "";
+  $("finDate").value = rec.date;
   if (kind === "g") $("finCat").value = rec.cat;
   $("finSubmit").textContent = "Guardar cambios";
   $("txType").style.display = "none"; // no se puede cambiar gasto↔ingreso al editar
@@ -314,6 +332,7 @@ function cancelEditTx() {
   editingTx = null;
   $("finAmount").value = "";
   $("finNote").value = "";
+  $("finDate").value = todayStr;
   $("txType").style.display = "";
   $("finCancel").style.display = "none";
   setTxType(txType);
@@ -323,6 +342,7 @@ $("finForm").addEventListener("submit", (e) => {
   const amount = parseFloat($("finAmount").value);
   if (!(amount > 0)) return;
   const note = $("finNote").value.trim();
+  const date = validDate($("finDate").value);
   if (editingTx) {
     const rec =
       editingTx.kind === "i"
@@ -331,17 +351,17 @@ $("finForm").addEventListener("submit", (e) => {
     if (rec) {
       rec.amount = amount;
       rec.note = note;
+      rec.date = date;
       if (editingTx.kind === "g") rec.cat = $("finCat").value;
     }
+    $("finMonth").value = date.slice(0, 7);
     cancelEditTx();
   } else {
-    const nid = uid();
-    if (txType === "ingreso") state.incomes.push({ id: nid, amount, note, date: todayStr });
-    else state.expenses.push({ id: nid, amount, cat: $("finCat").value, note, date: todayStr });
+    justAddedId = addMovement(txType, amount, $("finCat").value, note, date);
     $("finAmount").value = "";
     $("finNote").value = "";
-    $("finMonth").value = curMonth();
-    justAddedId = nid;
+    $("finDate").value = todayStr;
+    $("finMonth").value = date.slice(0, 7);
   }
   save();
   renderFinance();
@@ -352,6 +372,53 @@ $("finForm").addEventListener("submit", (e) => {
     flashNew(justAddedId);
     justAddedId = null;
   }
+});
+
+// ---------- Hoja de alta rápida (la abre el botón +) ----------
+let qaKind = "gasto";
+function updateQaType() {
+  document.querySelectorAll("#qaType .seg-btn").forEach((x) => x.classList.toggle("active", x.dataset.type === qaKind));
+  $("qaCat").style.display = qaKind === "ingreso" ? "none" : "";
+  $("qaNote").placeholder = qaKind === "ingreso" ? "Fuente (opcional)" : "Nota (opcional)";
+}
+function openAddSheet() {
+  qaKind = "gasto";
+  updateQaType();
+  $("qaAmount").value = "";
+  $("qaNote").value = "";
+  $("qaDate").value = todayStr;
+  $("addSheet").classList.add("open");
+  setTimeout(() => $("qaAmount").focus(), 60);
+}
+function closeAddSheet() {
+  $("addSheet").classList.remove("open");
+}
+document.querySelectorAll("#qaType .seg-btn").forEach((b) =>
+  b.addEventListener("click", () => {
+    qaKind = b.dataset.type;
+    updateQaType();
+  })
+);
+$("addForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const amount = parseFloat($("qaAmount").value);
+  if (!(amount > 0)) return;
+  const date = validDate($("qaDate").value);
+  const id = addMovement(qaKind, amount, $("qaCat").value, $("qaNote").value.trim(), date);
+  closeAddSheet();
+  $("finMonth").value = date.slice(0, 7);
+  save();
+  switchView("finanzas");
+  renderFinance();
+  renderMonthlySummary();
+  renderHome();
+  renderCalendar();
+  flashNew(id);
+  toast(qaKind === "ingreso" ? "Ingreso añadido." : "Gasto añadido.", { type: "ok" });
+});
+$("addClose").addEventListener("click", closeAddSheet);
+$("addSheet").addEventListener("click", (e) => {
+  if (e.target.id === "addSheet") closeAddSheet();
 });
 $("finCancel").addEventListener("click", cancelEditTx);
 $("finMonth").addEventListener("change", renderFinance);
