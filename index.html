@@ -225,6 +225,11 @@
           <div id="catBudgets"></div>
         </div>
 
+        <div class="card" id="healthCard" hidden>
+          <h2><span class="em">🩺</span> Salud financiera</h2>
+          <div id="healthBox"></div>
+        </div>
+
         <div class="card">
           <h2><span class="em">📊</span> Resumen por mes <span class="right" id="msAvg"></span></h2>
           <div class="ms-chart" id="msChart"></div>
@@ -415,6 +420,19 @@
           </div>
         </div>
         <div class="card">
+          <h2><span class="em">🔒</span> Bloqueo con PIN</h2>
+          <div class="mini" id="lockStatus"></div>
+          <div class="btn-grid" style="margin-top: 4px">
+            <button class="ghost" id="pinSetBtn">Establecer PIN</button>
+            <button class="ghost" id="pinLockNow" hidden>Bloquear ahora</button>
+            <button class="ghost" id="pinClearBtn" hidden style="color: var(--danger)">Quitar PIN</button>
+          </div>
+          <div class="mini">
+            Es una pantalla de privacidad para este dispositivo; no cifra tus datos (siguen en este navegador). Para
+            protección fuerte, usa el cifrado de la copia en la nube. El PIN no se sincroniza ni se exporta.
+          </div>
+        </div>
+        <div class="card">
           <h2><span class="em">🔔</span> Notificaciones</h2>
           <label class="cfg-row" style="cursor: pointer">
             <span>Recordarme tareas y hábitos al abrir</span>
@@ -435,9 +453,11 @@
             <button class="ghost" id="btnExport">⬇️ Exportar (JSON)</button>
             <button class="ghost" id="btnImport">⬆️ Importar (JSON)</button>
             <button class="ghost" id="btnCsv">📊 Gastos a CSV</button>
+            <button class="ghost" id="btnCsvImport">🏦 Importar CSV del banco</button>
             <button class="ghost" id="btnReset" style="color: var(--danger)">🗑️ Borrar todo</button>
           </div>
           <input type="file" id="fileImport" accept="application/json" style="display: none" />
+          <input type="file" id="csvFile" accept=".csv,text/csv" style="display: none" />
           <div class="mini">
             Tus datos se guardan solo en este navegador y este equipo. Exporta un respaldo de vez en cuando; usa
             Exportar/Importar para pasar tus datos entre el móvil y el PC. Para copiarlos automáticamente a tu cuenta,
@@ -526,6 +546,63 @@
       </div>
     </div>
 
+    <!-- ===== Modal: importar CSV del banco ===== -->
+    <div class="modal" id="csvModal">
+      <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="csvTitle">
+        <div class="modal-grip"></div>
+        <div class="modal-head">
+          <h3 id="csvTitle" style="text-transform: none">🏦 Importar CSV del banco</h3>
+          <button id="csvClose" type="button" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="mini" style="margin-bottom: 12px">
+            Revisa qué columna es cada cosa; detectamos lo más probable automáticamente.
+          </div>
+          <div class="cfg-row">
+            <label for="csvColDate">Fecha</label
+            ><select id="csvColDate"></select>
+          </div>
+          <div class="cfg-row">
+            <label for="csvColAmount">Importe</label
+            ><select id="csvColAmount"></select>
+          </div>
+          <div class="cfg-row">
+            <label for="csvColDesc">Concepto</label
+            ><select id="csvColDesc"></select>
+          </div>
+          <label class="cfg-row" style="cursor: pointer">
+            <span>Importes negativos = gastos</span>
+            <input type="checkbox" id="csvNeg" checked style="width: auto; flex: 0 0 auto" />
+          </label>
+          <div class="mini" id="csvSummary" style="margin: 10px 0"></div>
+          <div id="csvPreview"></div>
+          <div class="btn-grid" style="margin-top: 14px">
+            <button class="btn" id="csvImportBtn">Importar</button>
+            <button class="ghost" id="csvCancelBtn">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Pantalla de bloqueo (PIN) ===== -->
+    <div class="lock" id="lockScreen" hidden>
+      <div class="lock-box">
+        <div class="lock-logo">🔒</div>
+        <div class="lock-title">Panel Personal</div>
+        <input
+          type="password"
+          inputmode="numeric"
+          id="lockInput"
+          maxlength="12"
+          autocomplete="off"
+          placeholder="Introduce tu PIN"
+          aria-label="PIN"
+        />
+        <button class="btn" id="lockEnter">Entrar</button>
+        <div class="mini" id="lockMsg" style="color: var(--danger)"></div>
+      </div>
+    </div>
+
     <!-- ===== Toasts ===== -->
     <div class="toast-host" id="toastHost" aria-live="polite" aria-atomic="true"></div>
 
@@ -540,14 +617,17 @@
     <script src="js/weather.js"></script>
     <script src="js/home.js"></script>
     <script src="js/finance.js"></script>
+    <script src="js/health.js"></script>
     <script src="js/tasks.js"></script>
     <script src="js/habits.js"></script>
     <script src="js/calendar.js"></script>
     <script src="js/config.js"></script>
     <script src="js/backup.js"></script>
+    <script src="js/csv.js"></script>
     <script src="js/cloud.js"></script>
     <script src="js/report.js"></script>
     <script src="js/pomodoro.js"></script>
+    <script src="js/lock.js"></script>
     <script src="js/app.js"></script>
   </body>
 </html>

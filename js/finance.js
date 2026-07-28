@@ -81,6 +81,7 @@ function renderFinance() {
     : `<div class="empty">${filtering ? "Ningún movimiento coincide con el filtro." : "Agrega tu primer movimiento 👇"}</div>`;
   renderBalance(m);
   renderCategoryBudgets(m);
+  renderHealth(m);
 }
 
 // Presupuesto por categoría: una barra por cada categoría con límite fijado (mes seleccionado).

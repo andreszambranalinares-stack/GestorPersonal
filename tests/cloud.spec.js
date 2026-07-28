@@ -123,6 +123,53 @@ test.describe("Copia en la nube", () => {
     expect(note).toBe("remoto");
   });
 
+  test("conflicto: no pisa los cambios locales sin subir", async ({ page }) => {
+    await page.goto(LOGIN_URL);
+    // Estado local inicial y subida (fija lastRemoteAt, pendingPush=false).
+    await page.evaluate(async () => {
+      state.expenses.push({ id: "local", amount: 5, cat: "Otros", note: "LOCAL", date: todayStr });
+      save();
+      await cloudUpload();
+    });
+    // Otro dispositivo sube algo distinto (el remoto cambia, updated_at más nuevo).
+    await page.evaluate(async () => {
+      const remote = {
+        ...defaultState(),
+        expenses: [{ id: "rem", amount: 9, cat: "Otros", note: "REMOTO", date: todayStr }],
+      };
+      await fetch(`${location.origin}/rest/v1/backups?on_conflict=user_id`, {
+        method: "POST",
+        headers: {
+          apikey: "anon-test",
+          Authorization: "Bearer x",
+          "Content-Type": "application/json",
+          Prefer: "resolution=merge-duplicates,return=minimal",
+        },
+        body: JSON.stringify([
+          {
+            user_id: "user-test",
+            data: JSON.stringify(remote),
+            updated_at: new Date(Date.now() + 60000).toISOString(),
+          },
+        ]),
+      });
+    });
+    // En ESTE dispositivo hay un cambio local sin subir.
+    await page.evaluate(() => {
+      state.expenses.push({ id: "local2", amount: 7, cat: "Otros", note: "SINSUBIR", date: todayStr });
+      const cs = JSON.parse(localStorage.getItem("panelPersonal.cloud"));
+      cs.pendingPush = true;
+      localStorage.setItem("panelPersonal.cloud", JSON.stringify(cs));
+      save();
+    });
+    const before = await page.evaluate(() => state.expenses.map((e) => e.note).sort());
+    await page.evaluate(() => cloudPull({ auto: true }));
+    const after = await page.evaluate(() => state.expenses.map((e) => e.note).sort());
+    expect(after).toEqual(before); // no se pisó nada
+    expect(after).toContain("SINSUBIR");
+    await expect(page.locator("#toastHost")).toContainText("cambios en la nube");
+  });
+
   test("cifrado E2E: con frase incorrecta no restaura", async ({ page }) => {
     await page.goto(LOGIN_URL);
     await page.evaluate(async () => {

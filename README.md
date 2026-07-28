@@ -23,8 +23,13 @@ dispositivos.
 - **🌤️ Clima en vivo** vía [Open-Meteo](https://open-meteo.com) (sin API key).
 - **📱 App instalable** (PWA) que funciona **offline**, con **atajos** de instalación y
   pantalla de inicio ("Añadir gasto", "Nueva tarea").
-- **💾 Respaldo** — exportar/importar en JSON, exportar gastos a CSV e **informe mensual
+- **🩺 Salud financiera** — proyección de gasto a fin de mes, alertas por categoría y
+  **detección de suscripciones** (gastos que se repiten) con alta como gasto fijo.
+- **💾 Respaldo** — exportar/importar en JSON, exportar gastos a CSV, **importar el
+  extracto del banco (CSV)** con auto-detección de columnas, e **informe mensual
   imprimible / PDF** (ingresos, gastos por categoría, mayores gastos y productividad).
+- **🔒 Bloqueo con PIN** — pantalla de privacidad opcional al abrir (local a este
+  dispositivo; el PIN se guarda hasheado y no se sincroniza).
 - **🔔 Notificaciones** — aviso (al abrir la app) de tareas y hábitos pendientes de hoy.
 - **☁️ Copia en la nube (opcional)** — inicia sesión con un **enlace mágico** (sin
   contraseñas) y **sube/baja** tu estado, o activa la **sincronización automática** entre

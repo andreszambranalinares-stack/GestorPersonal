@@ -205,6 +205,9 @@ function cloudSignOut() {
 let cloudApplying = false;
 // Marca cuando una copia remota está cifrada y falta la frase para sincronizar.
 let cloudNeedsPass = false;
+// Marca un conflicto: hay cambios en la nube Y cambios locales sin subir. Mientras
+// esté activo se pausa la subida automática para no pisar ninguno de los dos lados.
+let cloudConflict = false;
 
 function passValue() {
   const el = $("cloudPass");
@@ -249,8 +252,10 @@ async function cloudPush({ auto = false } = {}) {
     s.lastSyncAt = updatedAt;
     s.lastRemoteAt = updatedAt;
     s.encrypted = !!pass;
+    s.pendingPush = false;
     setCloudSession(s);
     cloudNeedsPass = false;
+    cloudConflict = false;
     if (!auto) toast(pass ? "Copia cifrada subida a la nube." : "Copia subida a la nube.", { type: "ok" });
     renderCloud();
     return true;
@@ -290,6 +295,20 @@ async function cloudPull({ auto = false } = {}) {
     const remoteAt = rows[0].updated_at;
     const sess = cloudSession();
     if (auto && sess && sess.lastRemoteAt && remoteAt === sess.lastRemoteAt) return false; // nada nuevo
+
+    // Conflicto: el remoto cambió y además hay cambios locales sin subir. No pisamos
+    // nada en automático; avisamos y dejamos que el usuario elija.
+    if (auto && sess && sess.pendingPush && sess.lastRemoteAt && remoteAt !== sess.lastRemoteAt) {
+      cloudConflict = true;
+      renderCloud();
+      toast("Hay cambios en la nube y cambios sin subir en este dispositivo.", {
+        type: "warn",
+        duration: 12000,
+        actionLabel: "Subir los míos",
+        onAction: () => cloudPush({ auto: false }),
+      });
+      return false;
+    }
 
     const raw = rows[0].data;
     let envelope = null;
@@ -344,9 +363,11 @@ async function cloudPull({ auto = false } = {}) {
       sess.lastRemoteAt = remoteAt;
       sess.lastSyncAt = remoteAt;
       sess.encrypted = !!envelope;
+      sess.pendingPush = false;
       setCloudSession(sess);
     }
     cloudNeedsPass = false;
+    cloudConflict = false;
     initValues();
     renderAll();
     loadWeather();
@@ -386,7 +407,13 @@ let cloudSyncTimer = null;
 let cloudSyncDelay = 2500; // retardo del debounce (las pruebas lo bajan para ser deterministas)
 // Llamado desde save() tras cada cambio: sube con un pequeño retardo (debounce).
 function queueCloudSync() {
-  if (cloudApplying || !autoSyncOn()) return;
+  if (cloudApplying || cloudConflict || !autoSyncOn()) return;
+  // Marca que hay cambios locales pendientes de subir (para detectar conflictos).
+  const s = cloudSession();
+  if (s && !s.pendingPush) {
+    s.pendingPush = true;
+    setCloudSession(s);
+  }
   clearTimeout(cloudSyncTimer);
   cloudSyncTimer = setTimeout(() => cloudPush({ auto: true }), cloudSyncDelay);
 }
@@ -421,7 +448,8 @@ function renderCloud() {
   if (signedIn) {
     const last = s.lastSyncAt ? new Date(s.lastSyncAt).toLocaleString() : "—";
     const auto = !!s.autoSync;
-    $("cloudStatus").textContent = `Conectado como ${s.email || "(sin correo)"} · Última copia: ${last}`;
+    const conflict = cloudConflict ? " · ⚠️ conflicto: usa Subir/Bajar para resolver" : "";
+    $("cloudStatus").textContent = `Conectado como ${s.email || "(sin correo)"} · Última copia: ${last}${conflict}`;
     const chk = $("cloudAuto");
     if (chk) chk.checked = auto;
     const note = $("cloudNeedsPass");

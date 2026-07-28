@@ -1502,6 +1502,60 @@ button.icon-btn:active {
   }
 }
 
+/* ---------- Pantalla de bloqueo (PIN) ---------- */
+.lock {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--plane);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.lock[hidden] {
+  display: none;
+}
+.lock-box {
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.lock-logo {
+  font-size: 2.6rem;
+}
+.lock-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.lock-box input {
+  text-align: center;
+  font-size: 1.4rem;
+  letter-spacing: 0.3em;
+  padding: 12px;
+}
+
+/* ---------- Salud financiera ---------- */
+.health-row {
+  font-size: 0.92rem;
+  color: var(--text-2);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.health-row:last-of-type {
+  border-bottom: none;
+}
+.health-row b {
+  color: var(--text);
+}
+.health-row.warn {
+  color: var(--text);
+}
+
 /* ---------- Informe mensual imprimible ---------- */
 .report {
   display: none;
