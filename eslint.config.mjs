@@ -136,6 +136,8 @@ export default [
         renderAll: "readonly",
         renderFinance: "readonly",
         renderHabits: "readonly",
+        rolloverTasks: "readonly",
+        rolloverFixedExpenses: "readonly",
         checkTaskReminders: "readonly",
         validateImportedState: "readonly",
         encryptState: "readonly",
