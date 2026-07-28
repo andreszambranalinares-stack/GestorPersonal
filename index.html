@@ -420,6 +420,19 @@
           </div>
         </div>
         <div class="card">
+          <h2><span class="em">🔒</span> Bloqueo con PIN</h2>
+          <div class="mini" id="lockStatus"></div>
+          <div class="btn-grid" style="margin-top: 4px">
+            <button class="ghost" id="pinSetBtn">Establecer PIN</button>
+            <button class="ghost" id="pinLockNow" hidden>Bloquear ahora</button>
+            <button class="ghost" id="pinClearBtn" hidden style="color: var(--danger)">Quitar PIN</button>
+          </div>
+          <div class="mini">
+            Es una pantalla de privacidad para este dispositivo; no cifra tus datos (siguen en este navegador). Para
+            protección fuerte, usa el cifrado de la copia en la nube. El PIN no se sincroniza ni se exporta.
+          </div>
+        </div>
+        <div class="card">
           <h2><span class="em">🔔</span> Notificaciones</h2>
           <label class="cfg-row" style="cursor: pointer">
             <span>Recordarme tareas y hábitos al abrir</span>
@@ -571,6 +584,25 @@
       </div>
     </div>
 
+    <!-- ===== Pantalla de bloqueo (PIN) ===== -->
+    <div class="lock" id="lockScreen" hidden>
+      <div class="lock-box">
+        <div class="lock-logo">🔒</div>
+        <div class="lock-title">Panel Personal</div>
+        <input
+          type="password"
+          inputmode="numeric"
+          id="lockInput"
+          maxlength="12"
+          autocomplete="off"
+          placeholder="Introduce tu PIN"
+          aria-label="PIN"
+        />
+        <button class="btn" id="lockEnter">Entrar</button>
+        <div class="mini" id="lockMsg" style="color: var(--danger)"></div>
+      </div>
+    </div>
+
     <!-- ===== Toasts ===== -->
     <div class="toast-host" id="toastHost" aria-live="polite" aria-atomic="true"></div>
 
@@ -595,6 +627,7 @@
     <script src="js/cloud.js"></script>
     <script src="js/report.js"></script>
     <script src="js/pomodoro.js"></script>
+    <script src="js/lock.js"></script>
     <script src="js/app.js"></script>
   </body>
 </html>

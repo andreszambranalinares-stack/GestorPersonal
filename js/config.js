@@ -16,6 +16,7 @@ function renderConfig() {
   renderCategories();
   renderCloud();
   renderNotif();
+  renderLock();
 }
 
 // ---------- Notificaciones ----------
