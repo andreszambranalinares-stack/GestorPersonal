@@ -574,7 +574,12 @@
             <span>Importes negativos = gastos</span>
             <input type="checkbox" id="csvNeg" checked style="width: auto; flex: 0 0 auto" />
           </label>
+          <label class="cfg-row" style="cursor: pointer">
+            <span>Evitar duplicados (mismo día, importe y concepto)</span>
+            <input type="checkbox" id="csvDedup" checked style="width: auto; flex: 0 0 auto" />
+          </label>
           <div class="mini" id="csvSummary" style="margin: 10px 0"></div>
+          <div class="mini" style="margin-bottom: 6px">Toca una fila para incluirla o excluirla del importe.</div>
           <div id="csvPreview"></div>
           <div class="btn-grid" style="margin-top: 14px">
             <button class="btn" id="csvImportBtn">Importar</button>

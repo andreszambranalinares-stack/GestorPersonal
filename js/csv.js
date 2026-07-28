@@ -28,14 +28,16 @@ function csvSplitLine(line, delim) {
   return out.map((s) => s.trim());
 }
 
-function detectDelim(sample) {
-  const cands = [",", ";", "\t", "|"];
-  let best = ",";
-  let max = -1;
+// Elige el delimitador que produce más columnas en las primeras líneas
+// (algunos bancos, como CaixaBank, usan ';').
+function detectDelim(lines) {
+  const cands = [";", ",", "\t", "|"];
+  let best = ";";
+  let bestScore = -1;
   cands.forEach((d) => {
-    const n = (sample.match(new RegExp("\\" + d, "g")) || []).length;
-    if (n > max) {
-      max = n;
+    const score = Math.max(...lines.map((l) => csvSplitLine(l, d).length));
+    if (score > bestScore) {
+      bestScore = score;
       best = d;
     }
   });
@@ -46,10 +48,14 @@ function parseCSV(text) {
   const clean = text.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
   const lines = clean.split("\n").filter((l) => l.trim() !== "");
   if (!lines.length) return { headers: [], rows: [] };
-  const delim = detectDelim(lines[0]);
-  const grid = lines.map((l) => csvSplitLine(l, delim));
+  const delim = detectDelim(lines.slice(0, 8));
+  let grid = lines.map((l) => csvSplitLine(l, delim));
+  // Salta el preámbulo (títulos/observaciones con una sola columna) que algunos
+  // bancos ponen antes de la tabla de movimientos.
+  const startIdx = grid.findIndex((r) => r.length >= 2);
+  if (startIdx > 0) grid = grid.slice(startIdx);
   // ¿La primera fila es cabecera? Lo es si NO parece un movimiento (sin fecha+importe).
-  const first = grid[0];
+  const first = grid[0] || [];
   const firstLooksData = first.some((c) => parseCsvDate(c)) && first.some((c) => Number.isFinite(parseCsvAmount(c)));
   let headers, rows;
   if (firstLooksData) {
@@ -162,7 +168,17 @@ function detectColumns(headers, rows) {
   return { date, amount, desc };
 }
 
+// Clave para detectar el "mismo movimiento": día + importe + concepto + tipo.
+function csvKey(date, amount, note, type) {
+  return `${date}|${amount.toFixed(2)}|${(note || "").trim().toLowerCase()}|${type}`;
+}
+
 function buildCsvItems(rows, map, negIsExpense) {
+  // Movimientos que ya existen en el estado, para no reimportar lo que ya tienes.
+  const existing = new Set();
+  state.expenses.forEach((e) => existing.add(csvKey(e.date, e.amount, e.note || "", "gasto")));
+  state.incomes.forEach((e) => existing.add(csvKey(e.date, e.amount, e.note || "", "ingreso")));
+  const seen = new Set();
   const items = [];
   let skipped = 0;
   rows.forEach((r) => {
@@ -174,13 +190,21 @@ function buildCsvItems(rows, map, negIsExpense) {
     }
     const note = String(map.desc >= 0 ? r[map.desc] || "" : "").slice(0, 140);
     const type = negIsExpense ? (amount < 0 ? "gasto" : "ingreso") : "gasto";
-    items.push({ date, note, amount: Math.abs(amount), type });
+    const abs = Math.abs(amount);
+    const key = csvKey(date, abs, note, type);
+    // Duplicado: ya está en el estado, o ya apareció antes en este mismo CSV
+    // (cargos pendientes repetidos hasta que se liquidan).
+    const dup = existing.has(key) || seen.has(key);
+    seen.add(key);
+    items.push({ date, note, amount: abs, type, dup });
   });
   return { items, skipped };
 }
 
 // ---------- UI ----------
 let csvData = null; // { headers, rows }
+let csvItems = []; // items con bandera include (marcados/desmarcados por el usuario)
+let csvSkipped = 0;
 
 function openCsvModal(text) {
   csvData = parseCSV(text);
@@ -194,12 +218,13 @@ function openCsvModal(text) {
   $("csvColDate").innerHTML = opts(det.date);
   $("csvColAmount").innerHTML = opts(det.amount);
   $("csvColDesc").innerHTML = `<option value="-1">(ninguna)</option>` + opts(det.desc);
-  renderCsvPreview();
+  rebuildCsvItems();
   $("csvModal").classList.add("open");
 }
 function closeCsvModal() {
   $("csvModal").classList.remove("open");
   csvData = null;
+  csvItems = [];
 }
 function csvMapping() {
   return {
@@ -208,34 +233,50 @@ function csvMapping() {
     desc: Number($("csvColDesc").value),
   };
 }
-function renderCsvPreview() {
+// Reconstruye la lista al cambiar el mapeo, el signo o la opción de duplicados.
+function rebuildCsvItems() {
   if (!csvData) return;
-  const negIsExpense = $("csvNeg").checked;
-  const { items, skipped } = buildCsvItems(csvData.rows, csvMapping(), negIsExpense);
-  const gastos = items.filter((i) => i.type === "gasto").length;
-  const ingresos = items.length - gastos;
+  const dedup = $("csvDedup").checked;
+  const { items, skipped } = buildCsvItems(csvData.rows, csvMapping(), $("csvNeg").checked);
+  csvSkipped = skipped;
+  // Los duplicados se desmarcan por defecto si la opción está activa.
+  csvItems = items.map((it) => ({ ...it, include: dedup ? !it.dup : true }));
+  renderCsvPreview();
+}
+function renderCsvPreview() {
+  const incl = csvItems.filter((i) => i.include);
+  const gastos = incl.filter((i) => i.type === "gasto").length;
+  const dups = csvItems.filter((i) => i.dup).length;
   $("csvSummary").innerHTML =
-    `Se importarán <b>${items.length}</b> movimientos (${gastos} gastos, ${ingresos} ingresos).` +
-    (skipped ? ` Se omitirán ${skipped} filas no válidas.` : "");
-  $("csvPreview").innerHTML = items
-    .slice(0, 6)
-    .map(
-      (i) =>
-        `<div class="rt"><span style="flex:1 1 auto">${esc(i.date)} · ${esc(i.note) || "(sin concepto)"}</span>
-      <span class="${i.type === "gasto" ? "neg" : "pos"}">${i.type === "gasto" ? "−" : "+"}${money(i.amount)}</span></div>`
-    )
+    `Se importarán <b>${incl.length}</b> de ${csvItems.length} movimientos (${gastos} gastos, ${incl.length - gastos} ingresos).` +
+    (dups ? ` · ${dups} posible${dups > 1 ? "s" : ""} duplicado${dups > 1 ? "s" : ""}.` : "") +
+    (csvSkipped ? ` · ${csvSkipped} fila${csvSkipped > 1 ? "s" : ""} no válida${csvSkipped > 1 ? "s" : ""}.` : "");
+  // Vista previa COMPLETA y desplazable; cada fila se marca/desmarca con un clic.
+  $("csvPreview").innerHTML = csvItems
+    .map((i, idx) => {
+      const sign = i.type === "gasto" ? "−" : "+";
+      const dupTag = i.dup ? ` <span class="csv-dup">duplicado</span>` : "";
+      return `<div class="csv-row${i.include ? "" : " off"}" data-idx="${idx}" role="button" tabindex="0" aria-pressed="${i.include}">
+        <span class="csv-check">${i.include ? "☑" : "☐"}</span>
+        <span class="csv-desc">${esc(i.date)} · ${esc(i.note) || "(sin concepto)"}${dupTag}</span>
+        <span class="csv-amt ${i.type === "gasto" ? "neg" : "pos"}">${sign}${money(i.amount)}</span>
+      </div>`;
+    })
     .join("");
 }
+function toggleCsvRow(idx) {
+  if (!csvItems[idx]) return;
+  csvItems[idx].include = !csvItems[idx].include;
+  renderCsvPreview();
+}
 function importCsv() {
-  if (!csvData) return;
-  const { items } = buildCsvItems(csvData.rows, csvMapping(), $("csvNeg").checked);
-  if (!items.length) {
-    toast("No hay movimientos válidos para importar.", { type: "warn" });
+  const toAdd = csvItems.filter((i) => i.include);
+  if (!toAdd.length) {
+    toast("No hay movimientos seleccionados para importar.", { type: "warn" });
     return;
   }
-  const catSet = new Set(state.categories);
-  if (!catSet.has("Otros")) state.categories.push("Otros");
-  items.forEach((i) => {
+  if (!state.categories.includes("Otros")) state.categories.push("Otros");
+  toAdd.forEach((i) => {
     if (i.type === "gasto")
       state.expenses.push({ id: uid(), amount: i.amount, cat: "Otros", note: i.note, date: i.date });
     else state.incomes.push({ id: uid(), amount: i.amount, note: i.note, date: i.date });
@@ -244,7 +285,7 @@ function importCsv() {
   fetchedMonths.clear();
   renderAll();
   closeCsvModal();
-  toast(`Importados ${items.length} movimientos del CSV.`, { type: "ok" });
+  toast(`Importados ${toAdd.length} movimientos del CSV.`, { type: "ok" });
 }
 
 if ($("btnCsvImport")) {
@@ -269,7 +310,20 @@ if ($("btnCsvImport")) {
   $("csvModal").addEventListener("click", (e) => {
     if (e.target.id === "csvModal") closeCsvModal();
   });
-  ["csvColDate", "csvColAmount", "csvColDesc", "csvNeg"].forEach((id) =>
-    $(id).addEventListener("change", renderCsvPreview)
+  ["csvColDate", "csvColAmount", "csvColDesc", "csvNeg", "csvDedup"].forEach((id) =>
+    $(id).addEventListener("change", rebuildCsvItems)
   );
+  // Marcar/desmarcar una fila de la vista previa (clic o teclado).
+  $("csvPreview").addEventListener("click", (e) => {
+    const row = e.target.closest("[data-idx]");
+    if (row) toggleCsvRow(Number(row.dataset.idx));
+  });
+  $("csvPreview").addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const row = e.target.closest("[data-idx]");
+    if (row) {
+      e.preventDefault();
+      toggleCsvRow(Number(row.dataset.idx));
+    }
+  });
 }

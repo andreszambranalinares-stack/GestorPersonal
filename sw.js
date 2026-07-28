@@ -1,5 +1,5 @@
 // Service worker de Panel Personal — cachea el app-shell para uso offline.
-const CACHE = "panel-v13";
+const CACHE = "panel-v14";
 const SHELL = [
   "./",
   "./index.html",

@@ -7,6 +7,15 @@ function b64url(obj) {
 const TOKEN = `${b64url({ alg: "HS256", typ: "JWT" })}.${b64url({ sub: "user-test" })}.sig`;
 const LOGIN_URL = `/?login=1#access_token=${TOKEN}&refresh_token=r1&expires_in=3600&token_type=bearer&type=magiclink`;
 
+// Navega al enlace mágico y espera a que la sesión quede establecida
+// (handleAuthRedirect es asíncrono: consulta /auth/v1/user antes de fijar la sesión).
+async function login(page) {
+  await page.goto(LOGIN_URL);
+  await expect
+    .poll(() => page.evaluate(() => !!(JSON.parse(localStorage.getItem("panelPersonal.cloud")) || {}).access_token))
+    .toBe(true);
+}
+
 test.describe("Copia en la nube", () => {
   test.beforeEach(async ({ page }) => {
     page.on("dialog", (d) => d.accept()); // el "Bajar de la nube" pide confirmación
@@ -24,7 +33,7 @@ test.describe("Copia en la nube", () => {
   });
 
   test("login por enlace mágico guarda la sesión", async ({ page }) => {
-    await page.goto(LOGIN_URL);
+    await login(page);
     await expect
       .poll(() => page.evaluate(() => !!(JSON.parse(localStorage.getItem("panelPersonal.cloud")) || {}).access_token))
       .toBe(true);
@@ -34,7 +43,7 @@ test.describe("Copia en la nube", () => {
   });
 
   test("subir y bajar restaura el estado (sin cifrar)", async ({ page }) => {
-    await page.goto(LOGIN_URL);
+    await login(page);
     await page.evaluate(() => {
       state.expenses.push({ id: "e1", amount: 7, cat: "Otros", note: "nube", date: todayStr });
       save();
@@ -53,7 +62,7 @@ test.describe("Copia en la nube", () => {
   });
 
   test("cifrado E2E: el servidor solo guarda texto cifrado y se recupera con la frase", async ({ page }) => {
-    await page.goto(LOGIN_URL);
+    await login(page);
     await page.evaluate(async () => {
       state.expenses.push({ id: "e2", amount: 3, cat: "Otros", note: "secreto", date: todayStr });
       save();
@@ -78,7 +87,7 @@ test.describe("Copia en la nube", () => {
   });
 
   test("auto-sync: un cambio local se sube solo (debounce)", async ({ page }) => {
-    await page.goto(LOGIN_URL);
+    await login(page);
     // Debounce corto y determinista para la prueba (evita depender del reloj de CI).
     await page.evaluate(() => {
       cloudSyncDelay = 30;
@@ -103,7 +112,7 @@ test.describe("Copia en la nube", () => {
   });
 
   test("auto-sync: al abrir con auto activo baja lo más reciente del remoto", async ({ page }) => {
-    await page.goto(LOGIN_URL);
+    await login(page);
     await page.evaluate(async () => {
       // Sube "remoto" de forma determinista (subida manual, awaited).
       state.expenses.push({ id: "rem1", amount: 8, cat: "Otros", note: "remoto", date: todayStr });
@@ -124,7 +133,7 @@ test.describe("Copia en la nube", () => {
   });
 
   test("conflicto: no pisa los cambios locales sin subir", async ({ page }) => {
-    await page.goto(LOGIN_URL);
+    await login(page);
     // Estado local inicial y subida (fija lastRemoteAt, pendingPush=false).
     await page.evaluate(async () => {
       state.expenses.push({ id: "local", amount: 5, cat: "Otros", note: "LOCAL", date: todayStr });
@@ -171,7 +180,7 @@ test.describe("Copia en la nube", () => {
   });
 
   test("cifrado E2E: con frase incorrecta no restaura", async ({ page }) => {
-    await page.goto(LOGIN_URL);
+    await login(page);
     await page.evaluate(async () => {
       state.expenses.push({ id: "e3", amount: 3, cat: "Otros", note: "top", date: todayStr });
       save();

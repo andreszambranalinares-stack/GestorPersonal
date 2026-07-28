@@ -1502,6 +1502,51 @@ button.icon-btn:active {
   }
 }
 
+/* ---------- Vista previa del importador CSV ---------- */
+#csvPreview {
+  max-height: 42vh;
+  overflow-y: auto;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+}
+.csv-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--hairline);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.csv-row:last-child {
+  border-bottom: none;
+}
+.csv-row.off {
+  opacity: 0.4;
+}
+.csv-row .csv-check {
+  color: var(--accent);
+  font-size: 1.05rem;
+  line-height: 1;
+}
+.csv-row .csv-desc {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.csv-row .csv-amt {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.csv-dup {
+  font-size: 0.68rem;
+  background: color-mix(in srgb, var(--warn) 30%, transparent);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 1px 6px;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
 /* ---------- Pantalla de bloqueo (PIN) ---------- */
 .lock {
   position: fixed;
