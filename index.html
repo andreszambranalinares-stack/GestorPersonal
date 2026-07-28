@@ -127,6 +127,7 @@
               required
             />
             <select class="grow0" id="finCat" style="flex: 1 1 130px"></select>
+            <input class="grow0" type="date" id="finDate" aria-label="Fecha" style="flex: 1 1 130px" />
             <input type="text" id="finNote" maxlength="140" placeholder="Nota (opcional)" style="flex: 1 1 100%" />
             <button class="btn" type="submit" id="finSubmit" style="flex: 1 1 100%">Agregar gasto</button>
             <button class="ghost grow0" type="button" id="finCancel" style="flex: 0 0 auto; display: none">
@@ -531,6 +532,40 @@
           <button id="modalClose" type="button" aria-label="Cerrar">✕</button>
         </div>
         <div class="modal-body" id="modalBody"></div>
+      </div>
+    </div>
+
+    <!-- ===== Hoja: alta rápida de movimiento ===== -->
+    <div class="modal" id="addSheet">
+      <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="addTitle">
+        <div class="modal-grip"></div>
+        <div class="modal-head">
+          <h3 id="addTitle" style="text-transform: none">Nuevo movimiento</h3>
+          <button id="addClose" type="button" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="seg" id="qaType">
+            <button type="button" class="seg-btn active" data-type="gasto">− Gasto</button>
+            <button type="button" class="seg-btn" data-type="ingreso">＋ Ingreso</button>
+          </div>
+          <form id="addForm" class="row">
+            <input
+              class="grow0"
+              type="number"
+              step="0.01"
+              min="0"
+              inputmode="decimal"
+              id="qaAmount"
+              placeholder="Monto"
+              style="flex: 1 1 120px"
+              required
+            />
+            <input class="grow0" type="date" id="qaDate" aria-label="Fecha" style="flex: 1 1 140px" />
+            <select class="grow0" id="qaCat" style="flex: 1 1 100%"></select>
+            <input type="text" id="qaNote" maxlength="140" placeholder="Nota (opcional)" style="flex: 1 1 100%" />
+            <button class="btn" type="submit" style="flex: 1 1 100%">Añadir</button>
+          </form>
+        </div>
       </div>
     </div>
 
