@@ -2,12 +2,26 @@
 
 // ---------- Inicio (resumen) ----------
 function renderHome() {
+  const mo = curMonth();
   const gastoHoy = state.expenses.filter((e) => e.date === todayStr).reduce((s, e) => s + e.amount, 0);
-  const gastoMes = state.expenses.filter((e) => e.date.startsWith(curMonth())).reduce((s, e) => s + e.amount, 0);
+  const gastoMes = state.expenses.filter((e) => e.date.startsWith(mo)).reduce((s, e) => s + e.amount, 0);
+  const ingMes = state.incomes.filter((e) => e.date.startsWith(mo)).reduce((s, e) => s + e.amount, 0);
+  const net = ingMes - gastoMes;
   const pend = state.tasks.filter((t) => !t.done).length;
   const habDone = state.habits.filter((h) => h.log[todayStr]).length;
+
+  // Resumen del mes (mismos tiles de color que Finanzas).
+  $("homeMonthLbl").textContent = new Date(Number(mo.slice(0, 4)), Number(mo.slice(5, 7)) - 1, 1).toLocaleDateString(
+    "es",
+    { month: "long" }
+  );
+  $("homeIn").textContent = moneyShort(ingMes);
+  $("homeOut").textContent = moneyShort(gastoMes);
+  const nb = $("homeNet");
+  nb.textContent = moneyShort(net);
+  nb.className = "bv " + (net >= 0 ? "pos" : "neg");
+
   $("stGastoHoy").textContent = moneyShort(gastoHoy);
-  $("stGastoMes").textContent = moneyShort(gastoMes);
   $("stPend").textContent = pend;
   $("stHab").textContent = `${habDone}/${state.habits.length}`;
 

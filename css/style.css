@@ -399,6 +399,10 @@ body {
   gap: 12px;
   margin-bottom: 14px;
 }
+.stats.stats-3 {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
 .stat {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -406,8 +410,12 @@ body {
   padding: 14px 16px;
   box-shadow: var(--shadow);
 }
+.stats-3 .stat {
+  padding: 12px;
+  text-align: center;
+}
 .stat .sl {
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -420,8 +428,14 @@ body {
   margin-top: 3px;
   font-variant-numeric: tabular-nums;
 }
+.stats-3 .stat .sv {
+  font-size: 1.3rem;
+}
 .stat .sv.sm {
   font-size: 1.25rem;
+}
+.stats-3 .stat .sv.sm {
+  font-size: 1.15rem;
 }
 .chips {
   display: flex;
