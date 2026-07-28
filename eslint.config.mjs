@@ -142,6 +142,7 @@ export default [
         decryptState: "readonly",
         cloudUpload: "readonly",
         cloudDownload: "readonly",
+        cloudPull: "readonly",
         setAutoSync: "readonly",
         cloudSyncDelay: "writable",
         buildMonthlyReport: "readonly",
